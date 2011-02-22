@@ -245,6 +245,19 @@ static gboolean commandline_action_cb (ClutterActor *actor,
   return FALSE;
 }
 
+static void commandline_notify_cb (ClutterActor *actor,
+                                   GParamSpec   *pspec,
+                                   gpointer      data)
+{
+  ClutterRenderer *renderer = CLUTTER_RENDERER (data);
+  gfloat scale;
+  scale = clutter_actor_get_width (renderer->stage) /
+          (clutter_actor_get_width (actor) / 0.9);
+  if (scale > 1.0)
+    scale = 1.0;
+  clutter_actor_set_scale (actor, scale, scale);
+}
+
 static gboolean stage_motion (ClutterActor *actor,
                               ClutterEvent *event,
                               gpointer      renderer)
@@ -327,6 +340,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                     G_CALLBACK (commandline_action_cb), renderer);
   g_signal_connect (renderer->commandline, "captured-event",
                     G_CALLBACK (commandline_cancel_cb), renderer);
+  g_signal_connect (renderer->commandline, "notify::width",
+                    G_CALLBACK (commandline_notify_cb), renderer);
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
