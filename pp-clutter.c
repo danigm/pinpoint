@@ -875,8 +875,8 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
            clutter_actor_animate (renderer->shading,
                   CLUTTER_LINEAR, 500,
                   "opacity", 0,
-                  "width", 0,
-                  "height", 0,
+                  "width", 0.0,
+                  "height", 0.0,
                   NULL);
         }
 
