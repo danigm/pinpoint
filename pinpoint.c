@@ -549,7 +549,8 @@ pp_parse_slides (PinPointRenderer *renderer,
                        || g_str_has_suffix (filename, ".mov")
                        || g_str_has_suffix (filename, ".mp4")
                        || g_str_has_suffix (filename, ".wmv")
-                       || g_str_has_suffix (filename, ".webm"))
+                       || g_str_has_suffix (filename, ".webm")
+                       || g_str_has_suffix (filename, ".mkv"))
                         point->bg_type = PP_BG_VIDEO;
                       else if (g_str_has_suffix (filename, ".svg"))
                         point->bg_type = PP_BG_SVG;
