@@ -768,7 +768,7 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
 
   if (data->background)
     {
-      float bg_x, bg_y, bg_width, bg_height, bg_scale;
+      float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
       if (CLUTTER_IS_RECTANGLE (data->background))
         {
           clutter_actor_get_size (renderer->stage, &bg_width, &bg_height);
@@ -783,9 +783,9 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
                                         clutter_actor_get_width (renderer->stage),
                                         clutter_actor_get_height (renderer->stage),
                                         bg_width, bg_height,
-                                        &bg_x, &bg_y, &bg_scale);
+                                        &bg_x, &bg_y, &bg_scale_x, &bg_scale_y);
 
-      clutter_actor_set_scale (data->background, bg_scale, bg_scale);
+      clutter_actor_set_scale (data->background, bg_scale_x, bg_scale_y);
       clutter_actor_set_position (data->background, bg_x, bg_y);
 
 #ifdef USE_CLUTTER_GST

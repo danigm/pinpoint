@@ -191,7 +191,8 @@ pp_get_background_position_scale (PinPointPoint *point,
                                   float          bg_height,
                                   float         *bg_x,
                                   float         *bg_y,
-                                  float         *bg_scale)
+                                  float         *bg_scale_x,
+                                  float         *bg_scale_y)
 {
   float w_scale = stage_width / bg_width;
   float h_scale = stage_height / bg_height;
@@ -199,19 +200,23 @@ pp_get_background_position_scale (PinPointPoint *point,
   switch (point->bg_scale)
     {
     case PP_BG_FILL:
-      *bg_scale = (w_scale > h_scale) ? w_scale : h_scale;
+      *bg_scale_x = *bg_scale_y = (w_scale > h_scale) ? w_scale : h_scale;
       break;
     case PP_BG_FIT:
-      *bg_scale = (w_scale < h_scale) ? w_scale : h_scale;
+      *bg_scale_x = *bg_scale_y = (w_scale < h_scale) ? w_scale : h_scale;
       break;
     case PP_BG_UNSCALED:
-      *bg_scale = (w_scale < h_scale) ? w_scale : h_scale;
-      if (*bg_scale > 1.0)
-        *bg_scale = 1.0;
+      *bg_scale_x = *bg_scale_y = (w_scale < h_scale) ? w_scale : h_scale;
+      if (*bg_scale_x > 1.0)
+        *bg_scale_x = *bg_scale_y = 1.0;
+      break;
+    case PP_BG_STRETCH:
+      *bg_scale_x = w_scale;
+      *bg_scale_y = h_scale;
       break;
     }
-  *bg_x = (stage_width - bg_width * *bg_scale) / 2;
-  *bg_y = (stage_height - bg_height * *bg_scale) / 2;
+  *bg_x = (stage_width - bg_width * *bg_scale_x) / 2;
+  *bg_y = (stage_height - bg_height * *bg_scale_y) / 2;
 }
 
 void
@@ -347,6 +352,7 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("transition=") point->transition = char;
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
   IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
+  IF_EQUAL("stretch")      point->bg_scale = PP_BG_STRETCH;
   IF_EQUAL("unscaled")     point->bg_scale = PP_BG_UNSCALED;
   IF_EQUAL("center")       point->position = CLUTTER_GRAVITY_CENTER;
   IF_EQUAL("top")          point->position = CLUTTER_GRAVITY_NORTH;

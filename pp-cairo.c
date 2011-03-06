@@ -310,7 +310,7 @@ _cairo_render_background (CairoRenderer *renderer,
     case PP_BG_IMAGE:
       {
         cairo_surface_t *surface;
-        float bg_x, bg_y, bg_width, bg_height, bg_scale;
+        float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
 
         surface = _cairo_get_surface (renderer, point->bg);
         if (surface == NULL)
@@ -324,11 +324,11 @@ _cairo_render_background (CairoRenderer *renderer,
                                           A4_LS_WIDTH, A4_LS_HEIGHT,
                                           bg_width, bg_height,
                                           &bg_x, &bg_y,
-                                          &bg_scale);
+                                          &bg_scale_x, &bg_scale_y);
 
         cairo_save (renderer->ctx);
         cairo_translate (renderer->ctx, bg_x, bg_y);
-        cairo_scale (renderer->ctx, bg_scale, bg_scale);
+        cairo_scale (renderer->ctx, bg_scale_x, bg_scale_y);
         cairo_set_source_surface (renderer->ctx, surface, 0., 0.);
         cairo_paint (renderer->ctx);
         cairo_restore (renderer->ctx);
@@ -339,7 +339,7 @@ _cairo_render_background (CairoRenderer *renderer,
 #ifdef USE_CLUTTER_GST
         GdkPixbuf *pixbuf;
         cairo_surface_t *surface;
-        float bg_x, bg_y, bg_width, bg_height, bg_scale;
+        float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
         GCancellable* cancellable = g_cancellable_new ();
 
         pixbuf = gst_video_thumbnailer_get_shot (point->bg, cancellable);
@@ -356,11 +356,11 @@ _cairo_render_background (CairoRenderer *renderer,
                                           A4_LS_WIDTH, A4_LS_HEIGHT,
                                           bg_width, bg_height,
                                           &bg_x, &bg_y,
-                                          &bg_scale);
+                                          &bg_scale_x, &bg_scale_y);
 
         cairo_save (renderer->ctx);
         cairo_translate (renderer->ctx, bg_x, bg_y);
-        cairo_scale (renderer->ctx, bg_scale, bg_scale);
+        cairo_scale (renderer->ctx, bg_scale_x, bg_scale_y);
         cairo_set_source_surface (renderer->ctx, surface, 0., 0.);
         cairo_paint (renderer->ctx);
         cairo_restore (renderer->ctx);
@@ -372,7 +372,7 @@ _cairo_render_background (CairoRenderer *renderer,
       {
         RsvgHandle *svg = _cairo_get_svg (renderer, point->bg);
         RsvgDimensionData dim;
-        float bg_x, bg_y, bg_scale;
+        float bg_x, bg_y, bg_scale_x, bg_scale_y;
 
         if (svg == NULL)
           break;
@@ -383,11 +383,11 @@ _cairo_render_background (CairoRenderer *renderer,
                                           A4_LS_WIDTH, A4_LS_HEIGHT,
                                           dim.width, dim.height,
                                           &bg_x, &bg_y,
-                                          &bg_scale);
+                                          &bg_scale_x, &bg_scale_y);
 
         cairo_save (renderer->ctx);
         cairo_translate (renderer->ctx, bg_x, bg_y);
-        cairo_scale (renderer->ctx, bg_scale, bg_scale);
+        cairo_scale (renderer->ctx, bg_scale_x, bg_scale_y);
         rsvg_handle_render_cairo (svg, renderer->ctx);
 
         cairo_restore (renderer->ctx);

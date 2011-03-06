@@ -53,7 +53,8 @@ typedef enum
 {
   PP_BG_UNSCALED,
   PP_BG_FIT,    /* default value */
-  PP_BG_FILL
+  PP_BG_FILL,
+  PP_BG_STRETCH
 } PPBackgroundScale;
 
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
@@ -119,7 +120,9 @@ pp_get_background_position_scale (PinPointPoint *point,
                                   float          bg_height,
                                   float         *bg_x,
                                   float         *bg_y,
-                                  float         *bg_scale);
+                                  float         *bg_scale_x,
+                                  float         *bg_scale_y);
+
 void
 pp_get_text_position_scale (PinPointPoint *point,
                             float          stage_width,
