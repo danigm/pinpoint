@@ -41,6 +41,7 @@
 typedef struct _CairoRenderer
 {
   PinPointRenderer renderer;
+  gchar      *path;
   GHashTable *surfaces;         /* keep cairo_surface_t around for source
                                    images as we wantt to only include one
                                    instance of the image when using it in
@@ -77,10 +78,11 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
   /* A4, landscape */
   renderer->surface = cairo_pdf_surface_create (pp_output_filename,
                                                 A4_LS_WIDTH, A4_LS_HEIGHT);
+  renderer->path = g_strdup (pinpoint_file);
 
   renderer->ctx = cairo_create (renderer->surface);
   renderer->surfaces = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                              NULL, _destroy_surface);
+                                              g_free, _destroy_surface);
   renderer->svgs = g_hash_table_new_full (g_str_hash, g_str_equal,
                                           NULL,
                                           g_object_unref);
@@ -225,7 +227,7 @@ _cairo_get_surface (CairoRenderer *renderer,
     }
 
   surface = _cairo_new_surface_from_pixbuf (pixbuf);
-  g_hash_table_insert (renderer->surfaces, (char *) file, surface);
+  g_hash_table_insert (renderer->surfaces, g_strdup (file), surface);
 
   /* If we embed a JPEG, we can actually insert the coded data into the PDF in
    * a lossless fashion (no recompression of the JPEG) */
@@ -279,6 +281,18 @@ static void
 _cairo_render_background (CairoRenderer *renderer,
                           PinPointPoint *point)
 {
+  gchar *full_path = NULL;
+  const gchar *file = point->bg;
+
+  if (point->bg_type != PP_BG_COLOR && renderer->path && file)
+    {
+      gchar *dir = g_path_get_dirname (renderer->path);
+      full_path = g_build_filename (dir, file, NULL);
+      g_free (dir);
+
+      file = full_path;
+    }
+
   if (point->stage_color)
     {
       ClutterColor color;
@@ -312,7 +326,7 @@ _cairo_render_background (CairoRenderer *renderer,
         cairo_surface_t *surface;
         float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
 
-        surface = _cairo_get_surface (renderer, point->bg);
+        surface = _cairo_get_surface (renderer, file);
         if (surface == NULL)
           break;
 
@@ -342,12 +356,12 @@ _cairo_render_background (CairoRenderer *renderer,
         float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
         GCancellable* cancellable = g_cancellable_new ();
 
-        pixbuf = gst_video_thumbnailer_get_shot (point->bg, cancellable);
+        pixbuf = gst_video_thumbnailer_get_shot (file, cancellable);
         if (pixbuf == NULL)
           break;
 
         surface = _cairo_new_surface_from_pixbuf (pixbuf);
-        g_hash_table_insert (renderer->surfaces, (char *) point->bg, surface);
+        g_hash_table_insert (renderer->surfaces, g_strdup (file), surface);
 
         bg_width = cairo_image_surface_get_width (surface);
         bg_height = cairo_image_surface_get_height (surface);
@@ -370,7 +384,7 @@ _cairo_render_background (CairoRenderer *renderer,
     case PP_BG_SVG:
 #ifdef HAVE_RSVG
       {
-        RsvgHandle *svg = _cairo_get_svg (renderer, point->bg);
+        RsvgHandle *svg = _cairo_get_svg (renderer, file);
         RsvgDimensionData dim;
         float bg_x, bg_y, bg_scale_x, bg_scale_y;
 
@@ -397,6 +411,8 @@ _cairo_render_background (CairoRenderer *renderer,
     default:
       g_assert_not_reached();
     }
+
+  g_free (full_path);
 }
 
 static void
@@ -491,6 +507,7 @@ cairo_renderer_finalize (PinPointRenderer *pp_renderer)
 {
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
 
+  g_free (renderer->path);
   cairo_surface_destroy (renderer->surface);
   g_hash_table_unref (renderer->surfaces);
   g_hash_table_unref (renderer->svgs);
