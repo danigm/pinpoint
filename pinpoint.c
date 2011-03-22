@@ -580,6 +580,14 @@ pp_parse_slides (PinPointRenderer *renderer,
               g_string_append_c (slide_str, *p);
             }
           break;
+      case '#': /* comment */
+        if (startofline)
+          {
+            char *end = strchr (p, '\n');
+            if (end)
+              p = end + 1;
+          }
+        break;
         default:
           startofline = FALSE;
           g_string_append_c (slide_str, *p);
