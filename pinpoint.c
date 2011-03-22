@@ -585,7 +585,7 @@ pp_parse_slides (PinPointRenderer *renderer,
           {
             char *end = strchr (p, '\n');
             if (end)
-              p = end + 1;
+              p = end;
           }
         break;
         default:
