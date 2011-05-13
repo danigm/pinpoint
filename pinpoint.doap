@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gnome="http://api.gnome.org/doap-extensions#"
+         xmlns="http://usefulinc.com/ns/doap#">
+
+  <name>pinpoint</name>
+  <shortname>pinpoint</shortname>
+
+  <shortdesc xml:lang="en">A tool for making hackers do excellent presentations</shortdesc>
+
+  <description xml:lang="en">Pinpoint is a text file driven presentation tool aiming to make presentations be excellent; striving to reduce death by bullet point. And to keep peoples interest in what is actually being presented.
+</description>
+
+  <license rdf:resource="http://usefulinc.com/doap/licenses/lgpl" />
+
+  <programming-language>C</programming-language>
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Øyvind Kolås</foaf:name>
+      <foaf:mbox rdf:resource="mailto:pippin@gimp.org"/>
+      <gnome:userid>ok</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
+  <repository>
+    <GitRepository>
+      <browse rdf:resource="http://git.gnome.org/browse/pinpoint/"/>
+      <location rdf:resource="git://git.gnome.org/pinpoint"/>
+    </GitRepository>
+  </repository>
+
+</Project>
