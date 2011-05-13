@@ -14,10 +14,11 @@ pinpoint_SOURCES = \
   pinpoint.h \
   pp-cairo.c \
   pp-clutter.c \
+  gst-video-thumbnailer.h \
   gst-video-thumbnailer.c \
   $(DAX_SOURCES)
 
-EXTRA_DIST=sample.txt wth.jpg bg.jpg pp-super-aa.c pp-super-aa.h
+EXTRA_DIST=introduction.pin bowls.jpg bg.jpg linus.jpg pp-super-aa.c pp-super-aa.h
 
 MAINTAINERCLEANFILES = aclocal.m4 compile config.guess config.sub configure depcomp install-sh ltmain.sh Makefile.in missing
 
