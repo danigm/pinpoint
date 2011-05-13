@@ -537,6 +537,7 @@ pp_parse_slides (PinPointRenderer *renderer,
                        || g_str_has_suffix (filename, ".ogg")
                        || g_str_has_suffix (filename, ".ogv")
                        || g_str_has_suffix (filename, ".mpg")
+                       || g_str_has_suffix (filename, ".flv")
                        || g_str_has_suffix (filename, ".mpeg")
                        || g_str_has_suffix (filename, ".mov")
                        || g_str_has_suffix (filename, ".mp4")
