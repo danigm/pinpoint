@@ -1,0 +1,5 @@
+0.1 - First release - 2011-05-17
+
+Initial feature set: Positioning of text, image backgrounds, video backgrounds,
+transitions, video backgrounds, pdf export, running of commands, editing of
+commands, live updating when source changes.
