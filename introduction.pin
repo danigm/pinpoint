@@ -14,7 +14,7 @@ It has a simple text source
 - [font=monospace 18px] [shading-opacity=1.0]
 The current presentation thus far:
  #!/usr/bin/env pinpoint
- [font=Droid Sans 50px]
+ [font=Sans 50px]
  [bg.jpg]
  
  - The bits above this point are defaults for every slide in the presentation
