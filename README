@@ -1,19 +1,18 @@
 pinpoint
 --------
 
-pinpoint a simple presentation tool that hopes to avoid audience death by
-bullet point and instead provide presentations containing beautiful images
-and concies text slides.
+Pinpoint a simple presentation tool that hopes to avoid audience death by
+bullet point and instead encourage presentations containing beautiful images
+and small amounts of concise text in slides.
 
 Features:
   - Positioning of text
-  - image backgrounds
-  - video backgrounds
-  - transitions
-  - video backgrounds
-  - pdf export
-  - running of commands
-  - editing of commands during presentation
-  - live updating when source changes.
+  - Image backgrounds
+  - Video backgrounds
+  - Transitions
+  - PDF export
+  - Running of commands
+  - Editing of commands during presentation
+  - Monitoring of source file and live updates.
 
 See introduction.pin for more details/an example presentation.
