@@ -5,11 +5,12 @@
 - The bits above this point are defaults for every slide in the presentation
 Welcome to pinpoint
 
-- [bowls.jpg] lines starting with - are slide seperators. This is where you can override the defaults with with per-slide properties
+- lines starting with - are slide separators.
 A tool for making excellent presentations
 
--
+- [bowls.jpg] You can override the defaults with with per-slide properties
 It has a simple text source
+# The source can include witty comment lines
 
 - [font=monospace 18px] [shading-opacity=1.0]
 The current presentation thus far:
@@ -20,16 +21,16 @@ The current presentation thus far:
  - The bits above this point are defaults for every slide in the presentation
  Welcome to pinpoint
 
- - [bowls.jpg] lines starting with - are slide seperators..
+ - lines starting with - are slide separators.
  A tool for making excellent presentations
 
- -
- 
+ - [bowls.jpg] You can override the defaults with with per-slide properties
  It has a simple text source
+ # The source can include witty comment lines
 
  - [font=monospace 18px] [shading-opacity=1.0]
-
  The current presentation thus far:
+
 - [text-align=center]
 You start by writing down the core concepts that you will be talking about. Then sort and format
 them as a pinpoint presentation in a text editor of your choice. 
