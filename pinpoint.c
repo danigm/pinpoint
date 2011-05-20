@@ -586,9 +586,12 @@ pp_parse_slides (PinPointRenderer *renderer,
           {
             char *end = strchr (p, '\n');
             if (end)
-              p = end;
+              {
+                p = end;
+                break;
+              }
           }
-        break;
+        /* flow through */
         default:
           startofline = FALSE;
           g_string_append_c (slide_str, *p);
