@@ -94,13 +94,13 @@ Make text big!
 
 -
 <s>use</s> <b>pango</b> <i
-><span foreground='#f24'>m<u
+><span foreground='red'>m<u
 >ar</u>k<sup>up</sup></span></i> for style
 
 - [no-markup]
 [no-markup]
 <s>don't use</s> <b>pango</b> <i
-><span foreground='#f24'>m<u
+><span foreground='red'>m<u
 >ar</u>k<sup>up</sup></span></i>
 
 - [transition=page-curl-both][bowls.jpg]
