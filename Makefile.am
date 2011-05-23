@@ -2,7 +2,7 @@ SUBDIRS=transitions
 bin_PROGRAMS=pinpoint
 
 AM_CFLAGS = $(DEPS_CFLAGS) $(MAINTAINER_FLAGS) -D_GNU_SOURCE -DPKGDATADIR=\"$(pkgdatadir)/\"
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 if USE_DAX
 DAX_SOURCES = pp-super-aa.c pp-super-aa.h
