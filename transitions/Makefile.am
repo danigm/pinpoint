@@ -1,2 +1,2 @@
 transitionsdir = $(pkgdatadir)
-transitions_DATA = $(wildcard $(srcdir)/*.json)
+dist_transitions_DATA = $(wildcard $(srcdir)/*.json)
