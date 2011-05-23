@@ -329,8 +329,8 @@ parse_setting (PinPointPoint *point,
 #define END_PARSER   }
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
-#define char g_intern_string (strchrnul (setting, '=') + 1)
-#define float g_ascii_strtod (strchrnul (setting, '=') + 1, NULL);
+#define char g_intern_string (strchr (setting, '=') + 1)
+#define float g_ascii_strtod (strchr (setting, '=') + 1, NULL);
 #define enum(r,t,s) \
   do { \
       int _i; \
