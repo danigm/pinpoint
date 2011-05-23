@@ -167,7 +167,7 @@ _destroy_surface (gpointer data)
    */
 }
 
-static uint hide_cursor = 0;
+static guint hide_cursor = 0;
 static gboolean hide_cursor_cb (gpointer stage)
 {
   hide_cursor = 0;
