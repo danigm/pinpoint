@@ -1,6 +1,7 @@
 pinpoint
 .*.sw?
 .deps
+*.exe
 *.o
 *~
 INSTALL
