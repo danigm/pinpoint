@@ -312,6 +312,20 @@ pp_get_shading_position_size (float stage_width,
 
 void     pp_parse_slides  (PinPointRenderer *renderer,
                            const char       *slide_src);
+
+static inline char *my_strchr_coz_gcc_is_broken (const char *s, int c)
+{
+  /* by directly using strchr in the below code gcc balks out with the
+   * following error :
+   *
+   * pinpoint.c: In function ‘parse_setting’:
+   * pinpoint.c:358:58: error: expected expression before ‘)’ token
+   *
+   * .. for the expansion of the hacky float macro below.
+   */
+  return strchr (s, c);
+}
+
 /*
  * Parsing
  */
@@ -329,8 +343,8 @@ parse_setting (PinPointPoint *point,
 #define END_PARSER   }
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
-#define char g_intern_string (strchr (setting, '=') + 1)
-#define float g_ascii_strtod (strchr (setting, '=') + 1, NULL);
+#define char g_intern_string (my_strchr_coz_gcc_is_broken (setting, '=') + 1)
+#define float g_ascii_strtod (my_strchr_coz_gcc_is_broken (setting, '=') + 1, NULL)
 #define enum(r,t,s) \
   do { \
       int _i; \
