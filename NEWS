@@ -1,4 +1,14 @@
-0.1 - First release - 2011-05-17
+0.1.2 - Sushi Monday - 2011-05-23
+
+- New background scaling type 'stretch'
+- Handle relative paths fully
+- Added '.mkv' to list of video extensions
+- Only treat # at start of line as comments
+- Improve documentation
+- Distribute ClutterScript based transitions in tarball
+  (without it pinpoint didnt work)(
+
+0.1.0 - First release - 2011-05-17
 
 Initial feature set: Positioning of text, image backgrounds, video backgrounds,
 transitions, video backgrounds, pdf export, running of commands, editing of
