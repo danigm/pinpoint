@@ -21,8 +21,15 @@
  *             Emmanuele Bassi <ebassi@linux.intel.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pinpoint.h"
+
+#if HAVE_CLUTTER_X11
 #include <clutter/x11/clutter-x11.h>
+#endif
 #include <gio/gio.h>
 #ifdef USE_CLUTTER_GST
 #include <clutter-gst/clutter-gst.h>
@@ -98,7 +105,7 @@ static gboolean key_pressed   (ClutterActor     *actor,
                                ClutterEvent     *event,
                                ClutterRenderer  *renderer);
 
-
+#ifdef HAVE_CLUTTER_X11
 static void pp_set_fullscreen (ClutterStage  *stage,
                                gboolean       fullscreen)
 {
@@ -158,6 +165,21 @@ static gboolean pp_get_fullscreen (ClutterStage *stage)
     return clutter_stage_get_fullscreen (stage);
   return pp_fullscreen;
 }
+#else
+
+static void
+pp_set_fullscreen (ClutterStage  *stage,
+                   gboolean       fullscreen)
+{
+  return clutter_stage_set_fullscreen (stage, fullscreen);
+}
+
+static gboolean
+pp_get_fullscreen (ClutterStage *stage)
+{
+  return clutter_stage_get_fullscreen (stage);
+}
+#endif
 
 static void
 _destroy_surface (gpointer data)
