@@ -425,7 +425,7 @@ _cairo_render_text (CairoRenderer *renderer,
   ClutterColor          text_color,
                         shading_color;
 
-  float text_x,    text_y,    text_width,    text_height;
+  float text_x,    text_y,    text_width,    text_height,   text_scale;
   float shading_x, shading_y, shading_width, shading_height;
 
   layout = pango_cairo_create_layout (renderer->ctx);
