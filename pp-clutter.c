@@ -62,7 +62,7 @@ typedef struct _ClutterRenderer
 
   ClutterActor    *json_layer;
 
-  ClutterActor    *commandline; 
+  ClutterActor    *commandline;
   ClutterActor    *commandline_shading;
   char *path;               /* path of the file of the GFileMonitor callback */
   float rest_y;             /* where the text can rest */
@@ -110,7 +110,7 @@ static void pp_set_fullscreen (ClutterStage  *stage,
                                gboolean       fullscreen)
 {
   static gboolean is_fullscreen = FALSE;
-  static gfloat old_width=640, old_height=480;
+  static float old_width=640, old_height=480;
 
   struct {
     unsigned long flags;
@@ -207,13 +207,14 @@ activate_commandline (ClutterRenderer *renderer)
 
   if (!pp_slidep)
     return;
- 
+
   point = pp_slidep->data;
   data = point->data;
 
   clutter_actor_animate (renderer->commandline,
                          CLUTTER_LINEAR, 500,
                          "opacity", 0xff, NULL);
+
   clutter_actor_animate (renderer->commandline_shading,
                          CLUTTER_LINEAR, 100,
                          "opacity", (int)(point->shading_opacity*0xff*0.33), NULL);
@@ -272,7 +273,8 @@ static void commandline_notify_cb (ClutterActor *actor,
                                    gpointer      data)
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (data);
-  gfloat scale;
+  float            scale;
+
   scale = clutter_actor_get_width (renderer->stage) /
           (clutter_actor_get_width (actor) / 0.9);
   if (scale > 1.0)
@@ -284,7 +286,7 @@ static gboolean stage_motion (ClutterActor *actor,
                               ClutterEvent *event,
                               gpointer      renderer)
 {
-  gfloat stage_width, stage_height;
+  float stage_width, stage_height;
 
   if (hide_cursor)
     g_source_remove (hide_cursor);
@@ -432,16 +434,16 @@ static gboolean
 clutter_renderer_make_point (PinPointRenderer *pp_renderer,
                              PinPointPoint    *point)
 {
-  ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
-  ClutterPointData *data = point->data;
-  const gchar *file = point->bg;
-  gchar *full_path = NULL;
+  ClutterRenderer  *renderer  = CLUTTER_RENDERER (pp_renderer);
+  ClutterPointData *data      = point->data;
+  const char       *file      = point->bg;
+        char       *full_path = NULL;
   ClutterColor color;
   gboolean ret;
 
   if (point->bg_type != PP_BG_COLOR && renderer->path && file)
     {
-      gchar *dir = g_path_get_dirname (renderer->path);
+      char *dir = g_path_get_dirname (renderer->path);
       full_path = g_build_filename (dir, file, NULL);
       g_free (dir);
 
@@ -455,8 +457,8 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
         ret = clutter_color_from_string (&color, point->bg);
         if (ret)
           data->background = g_object_new (CLUTTER_TYPE_RECTANGLE,
-                                           "color", &color,
-                                           "width", 100.0,
+                                           "color",  &color,
+                                           "width",  100.0,
                                            "height", 100.0,
                                            NULL);
       }
@@ -517,20 +519,20 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
   if (point->use_markup)
     {
       data->text = g_object_new (CLUTTER_TYPE_TEXT,
-                                 "font-name", point->font,
-                                 "text", point->text,
+                                 "font-name",      point->font,
+                                 "text",           point->text,
                                  "line-alignment", point->text_align,
-                                 "color", &color,
-                                 "use-markup", TRUE,
+                                 "color",          &color,
+                                 "use-markup",     TRUE,
                                  NULL);
     }
   else
     {
       data->text = g_object_new (CLUTTER_TYPE_TEXT,
-                                 "font-name", point->font,
-                                 "text", point->text,
+                                 "font-name",      point->font,
+                                 "text",           point->text,
                                  "line-alignment", point->text_align,
-                                 "color", &color,
+                                 "color",          &color,
                                  NULL);
     }
 
@@ -614,7 +616,7 @@ key_pressed (ClutterActor    *actor,
         break;
       case CLUTTER_F11:
         pp_set_fullscreen (CLUTTER_STAGE (renderer->stage),
-                           !pp_get_fullscreen (CLUTTER_STAGE (renderer->stage)));
+                          !pp_get_fullscreen (CLUTTER_STAGE (renderer->stage)));
         break;
       case CLUTTER_Return:
         action_slide (renderer);
@@ -637,22 +639,23 @@ static void leave_slide (ClutterRenderer *renderer,
     {
       clutter_actor_animate (data->text,
                              CLUTTER_LINEAR, 2000,
-                             "depth", RESTDEPTH,
-                             "scale-x", 1.0,
-                             "scale-y", 1.0,
-                             "x", RESTX,
-                             "y", data->rest_y,
+                             "depth",        RESTDEPTH,
+                             "scale-x",      1.0,
+                             "scale-y",      1.0,
+                             "x",            RESTX,
+                             "y",            data->rest_y,
                              NULL);
       if (data->background)
         {
           clutter_actor_animate (data->background,
                                  CLUTTER_LINEAR, 1000,
-                                 "opacity", 0x0,
+                                 "opacity",      0x0,
                                  NULL);
 #ifdef USE_CLUTTER_GST
           if (CLUTTER_GST_IS_VIDEO_TEXTURE (data->background))
             {
-              clutter_media_set_playing (CLUTTER_MEDIA (data->background), FALSE);
+              clutter_media_set_playing (CLUTTER_MEDIA (data->background),
+                                         FALSE);
             }
 #endif
 #ifdef USE_DAX
@@ -676,7 +679,7 @@ static void leave_slide (ClutterRenderer *renderer,
         {
           if (backwards)
             clutter_state_set_state (data->state, "pre");
-          else 
+          else
             clutter_state_set_state (data->state, "post");
         }
     }
@@ -684,9 +687,9 @@ static void leave_slide (ClutterRenderer *renderer,
 
 static void state_completed (ClutterState *state, gpointer user_data)
 {
-  PinPointPoint    *point = user_data;
-  ClutterPointData *data = point->data;
-  const gchar *new_state = clutter_state_get_state (state);
+  PinPointPoint    *point     = user_data;
+  ClutterPointData *data      = point->data;
+  const char       *new_state = clutter_state_get_state (state);
 
   if (new_state == g_intern_static_string ("post") ||
       new_state == g_intern_static_string ("pre"))
@@ -697,11 +700,11 @@ static void state_completed (ClutterState *state, gpointer user_data)
           clutter_actor_reparent (data->text, CLUTTER_RENDERER (data->renderer)->foreground);
 
           g_object_set (data->text,
-                        "depth", RESTDEPTH,
+                        "depth",   RESTDEPTH,
                         "scale-x", 1.0,
                         "scale-y", 1.0,
-                        "x", RESTX,
-                        "y", data->rest_y,
+                        "x",       RESTX,
+                        "y",       data->rest_y,
                         NULL);
           clutter_actor_set_opacity (data->background, 0);
         }
@@ -711,13 +714,13 @@ static void state_completed (ClutterState *state, gpointer user_data)
 static void
 action_slide (ClutterRenderer *renderer)
 {
-  PinPointPoint *point;
+  PinPointPoint    *point;
   ClutterPointData *data;
-  const char *command = NULL;
+  const char       *command = NULL;
 
   if (!pp_slidep)
     return;
- 
+
   point = pp_slidep->data;
   data = point->data;
 
@@ -734,13 +737,14 @@ action_slide (ClutterRenderer *renderer)
     }
 }
 
-static gchar *pp_lookup_transition (const gchar *transition)
+static char *pp_lookup_transition (const char *transition)
 {
-  int i;
-  gchar *dirs[] ={ "", "./transitions/", PKGDATADIR, NULL};
+  int   i;
+  char *dirs[] ={ "", "./transitions/", PKGDATADIR, NULL};
+
   for (i = 0; dirs[i]; i++)
     {
-      gchar *path = g_strdup_printf ("%s%s.json", dirs[i], transition);
+      char *path = g_strdup_printf ("%s%s.json", dirs[i], transition);
       if (g_file_test (path, G_FILE_TEST_EXISTS))
         return path;
       g_free (path);
@@ -751,47 +755,53 @@ static gchar *pp_lookup_transition (const gchar *transition)
 
 static void update_commandline_shading (ClutterRenderer *renderer)
 {
-   ClutterColor color;
-   float text_x, text_y, text_width, text_height;
-   float shading_x, shading_y, shading_width, shading_height;
-   const char *command;
-   PinPointPoint *point;
-   point = pp_slidep->data;
-   clutter_actor_get_size (renderer->commandline, &text_width, &text_height);
-   clutter_actor_get_position (renderer->commandline, &text_x, &text_y);
-   pp_get_shading_position_size (clutter_actor_get_width (renderer->stage),
-                                 clutter_actor_get_height (renderer->stage),
-                                 text_x, text_y,
-                                 text_width, text_height,
-                                 1.0,
-                                 &shading_x, &shading_y,
-                                 &shading_width, &shading_height);
-   
-   clutter_color_from_string (&color, point->shading_color);
-   g_object_set (renderer->commandline_shading,
-          "x", shading_x,
-          "y", shading_y,
-          NULL);
-   command = clutter_text_get_text (CLUTTER_TEXT (renderer->commandline));
-   clutter_actor_animate (renderer->commandline_shading,
-          CLUTTER_EASE_OUT_QUINT, 1000,
-          "opacity", command && *command?(int)(point->shading_opacity*255*0.33):0,
-          "color", &color,
-          "width", shading_width,
-          "height", shading_height,
-          NULL);
-  }
+  PinPointPoint *point;
+  ClutterColor   color;
+  const char    *command;
+
+  float text_x,    text_y,    text_width,    text_height;
+  float shading_x, shading_y, shading_width, shading_height;
+
+  point = pp_slidep->data;
+  clutter_actor_get_size (renderer->commandline, &text_width, &text_height);
+  clutter_actor_get_position (renderer->commandline, &text_x, &text_y);
+  pp_get_shading_position_size (clutter_actor_get_width (renderer->stage),
+                                clutter_actor_get_height (renderer->stage),
+                                text_x, text_y,
+                                text_width, text_height,
+                                1.0,
+                                &shading_x, &shading_y,
+                                &shading_width, &shading_height);
+
+  clutter_color_from_string (&color, point->shading_color);
+  g_object_set (renderer->commandline_shading,
+         "x", shading_x,
+         "y", shading_y,
+         NULL);
+  command = clutter_text_get_text (CLUTTER_TEXT (renderer->commandline));
+
+  clutter_actor_animate (renderer->commandline_shading,
+       CLUTTER_EASE_OUT_QUINT, 1000,
+
+       /* the opacity of the commandline shading depends on whether we
+          have a command or not */
+       "opacity", command && *command?(int)(point->shading_opacity*255*0.33):0,
+       "color",   &color,
+       "width",   shading_width,
+       "height",  shading_height,
+       NULL);
+}
 
 static void
 show_slide (ClutterRenderer *renderer, gboolean backwards)
 {
-  PinPointPoint *point;
+  PinPointPoint    *point;
   ClutterPointData *data;
-  ClutterColor color;
+  ClutterColor      color;
 
   if (!pp_slidep)
     return;
- 
+
   point = pp_slidep->data;
   data = point->data;
 
@@ -804,6 +814,7 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
   if (data->background)
     {
       float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
+
       if (CLUTTER_IS_RECTANGLE (data->background))
         {
           clutter_actor_get_size (renderer->stage, &bg_width, &bg_height);
@@ -814,11 +825,12 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
           clutter_actor_get_size (data->background, &bg_width, &bg_height);
         }
 
-      pp_get_background_position_scale (point,
-                                        clutter_actor_get_width (renderer->stage),
-                                        clutter_actor_get_height (renderer->stage),
-                                        bg_width, bg_height,
-                                        &bg_x, &bg_y, &bg_scale_x, &bg_scale_y);
+      pp_get_background_position_scale (
+          point,
+          clutter_actor_get_width (renderer->stage),
+          clutter_actor_get_height (renderer->stage),
+          bg_width, bg_height,
+          &bg_x, &bg_y, &bg_scale_x, &bg_scale_y);
 
       clutter_actor_set_scale (data->background, bg_scale_x, bg_scale_y);
       clutter_actor_set_position (data->background, bg_x, bg_y);
@@ -853,66 +865,70 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
     {
       clutter_actor_animate (renderer->foreground,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 255,
+                             "opacity",      255,
                              NULL);
       clutter_actor_animate (renderer->midground,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 255,
+                             "opacity",      255,
                              NULL);
       clutter_actor_animate (renderer->background,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 255,
+                             "opacity",      255,
                              NULL);
 
-      
       if (point->text && *point->text)
         {
          float text_x, text_y, text_width, text_height, text_scale;
          float shading_x, shading_y, shading_width, shading_height;
 
          clutter_actor_get_size (data->text, &text_width, &text_height);
-         pp_get_text_position_scale (point,
-                                     clutter_actor_get_width (renderer->stage),
-                                     clutter_actor_get_height (renderer->stage),
-                                     text_width, text_height,
-                                     &text_x, &text_y,
-                                     &text_scale);
-         pp_get_shading_position_size (clutter_actor_get_width (renderer->stage),
-                                       clutter_actor_get_height (renderer->stage),
-                                       text_x, text_y,
-                                       text_width, text_height,
-                                       text_scale,
-                                       &shading_x, &shading_y,
-                                       &shading_width, &shading_height);
+
+         pp_get_text_position_scale (
+             point,
+             clutter_actor_get_width (renderer->stage),
+             clutter_actor_get_height (renderer->stage),
+             text_width, text_height,
+             &text_x, &text_y,
+             &text_scale);
+
+         pp_get_shading_position_size (
+             clutter_actor_get_width (renderer->stage),
+             clutter_actor_get_height (renderer->stage),
+             text_x, text_y,
+             text_width, text_height,
+             text_scale,
+             &shading_x, &shading_y,
+             &shading_width, &shading_height);
+
          clutter_color_from_string (&color, point->shading_color);
 
          clutter_actor_animate (data->text,
                                 CLUTTER_EASE_OUT_QUINT, 1000,
-                                "depth", 0.0,
+                                "depth",   0.0,
                                 "scale-x", text_scale,
                                 "scale-y", text_scale,
-                                "x", text_x,
-                                "y", text_y,
+                                "x",       text_x,
+                                "y",       text_y,
                                 NULL);
 
          clutter_actor_animate (renderer->shading,
                 CLUTTER_EASE_OUT_QUINT, 1000,
-                "x", shading_x,
-                "y", shading_y,
+                "x",       shading_x,
+                "y",       shading_y,
                 "opacity", (int)(point->shading_opacity*255),
-                "color", &color,
-                "width", shading_width,
-                "height", shading_height,
+                "color",   &color,
+                "width",   shading_width,
+                "height",  shading_height,
                 NULL);
         }
       else
         {
-           clutter_actor_animate (renderer->shading,
-                  CLUTTER_LINEAR, 500,
-                  "opacity", 0,
-                  "width", 0.0,
-                  "height", 0.0,
-                  NULL);
+          clutter_actor_animate (renderer->shading,
+                 CLUTTER_LINEAR, 500,
+                 "opacity", 0,
+                 "width",   0.0,
+                 "height",  0.0,
+                 NULL);
         }
 
 
@@ -928,29 +944,37 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
       /* fade out global group of texts when using a custom .json template */
       clutter_actor_animate (renderer->foreground,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 0,
+                             "opacity",      0,
                              NULL);
       clutter_actor_animate (renderer->midground,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 0,
+                             "opacity",      0,
                              NULL);
       clutter_actor_animate (renderer->background,
                              CLUTTER_LINEAR, 500,
-                             "opacity", 0,
+                             "opacity",      0,
                              NULL);
       if (!data->script)
         {
-          gchar *path = pp_lookup_transition (point->transition);
+          char *path = pp_lookup_transition (point->transition);
           data->script = clutter_script_new ();
           clutter_script_load_from_file (data->script, path, &error);
           g_free (path);
-          data->foreground = CLUTTER_ACTOR (clutter_script_get_object (data->script, "foreground"));
-          data->midground = CLUTTER_ACTOR (clutter_script_get_object (data->script, "midground"));
-          data->background2 = CLUTTER_ACTOR (clutter_script_get_object (data->script, "background"));
-          data->state = CLUTTER_STATE (clutter_script_get_object (data->script, "state"));
-          data->json_slide = CLUTTER_ACTOR (clutter_script_get_object (data->script, "actor"));
-          clutter_container_add_actor (CLUTTER_CONTAINER (renderer->json_layer), data->json_slide);
-          g_signal_connect (data->state, "completed", G_CALLBACK (state_completed), point);
+          data->foreground = CLUTTER_ACTOR (
+              clutter_script_get_object (data->script, "foreground"));
+          data->midground = CLUTTER_ACTOR (
+              clutter_script_get_object (data->script, "midground"));
+          data->background2 = CLUTTER_ACTOR (
+              clutter_script_get_object (data->script, "background"));
+          data->state = CLUTTER_STATE (
+              clutter_script_get_object (data->script, "state"));
+          data->json_slide = CLUTTER_ACTOR (
+              clutter_script_get_object (data->script, "actor"));
+
+          clutter_container_add_actor (CLUTTER_CONTAINER (renderer->json_layer),
+                                       data->json_slide);
+          g_signal_connect (data->state, "completed",
+                            G_CALLBACK (state_completed), point);
           clutter_state_warp_to_state (data->state, "pre");
 
           if (data->background2) /* parmanently steal background */
@@ -958,24 +982,32 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
               clutter_actor_reparent (data->background, data->background2);
             }
         }
-          clutter_actor_set_size (data->json_slide, clutter_actor_get_width (renderer->stage),
-                                                    clutter_actor_get_height (renderer->stage));
 
-          clutter_actor_set_size (data->foreground, clutter_actor_get_width (renderer->stage),
-                                                    clutter_actor_get_height (renderer->stage));
+      clutter_actor_set_size (data->json_slide,
+                              clutter_actor_get_width (renderer->stage),
+                              clutter_actor_get_height (renderer->stage));
 
-          clutter_actor_set_size (data->background2, clutter_actor_get_width (renderer->stage),
-                                                    clutter_actor_get_height (renderer->stage));
+      clutter_actor_set_size (data->foreground,
+                              clutter_actor_get_width (renderer->stage),
+                              clutter_actor_get_height (renderer->stage));
+
+      clutter_actor_set_size (data->background2,
+                              clutter_actor_get_width (renderer->stage),
+                              clutter_actor_get_height (renderer->stage));
+
       if (!data->json_slide)
         {
-          g_warning ("failed to load transition %s %s\n", point->transition, error?error->message:"");
+          g_warning ("failed to load transition %s %s\n",
+                     point->transition, error?error->message:"");
           return;
         }
+
       if (data->foreground)
         {
           clutter_actor_reparent (data->text, data->foreground);
         }
-              clutter_actor_set_opacity (data->background, 255);
+
+      clutter_actor_set_opacity (data->background, 255);
 
       {
        float text_x, text_y, text_width, text_height, text_scale;
@@ -988,13 +1020,12 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
                                    &text_x, &text_y,
                                    &text_scale);
        g_object_set (data->text,
-                     "depth", 0.0,
+                     "depth",   0.0,
                      "scale-x", text_scale,
                      "scale-y", text_scale,
-                     "x", text_x,
-                     "y", text_y,
+                     "x",       text_x,
+                     "y",       text_y,
                      NULL);
-
 
        if (clutter_actor_get_width (data->text) > 1.0)
          {
@@ -1002,28 +1033,33 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
            float shading_x, shading_y, shading_width, shading_height;
            clutter_color_from_string (&color, point->shading_color);
 
+           pp_get_shading_position_size (
+                clutter_actor_get_width (renderer->stage),
+                clutter_actor_get_height (renderer->stage),
+                text_x, text_y,
+                text_width, text_height,
+                text_scale,
+                &shading_x, &shading_y,
+                &shading_width, &shading_height);
 
-           pp_get_shading_position_size (clutter_actor_get_width (renderer->stage),
-                                         clutter_actor_get_height (renderer->stage),
-                                         text_x, text_y,
-                                         text_width, text_height,
-                                         text_scale,
-                                         &shading_x, &shading_y,
-                                         &shading_width, &shading_height);
            if (!data->shading)
              {
                data->shading = clutter_rectangle_new_with_color (&black);
-               clutter_container_add_actor (CLUTTER_CONTAINER (data->midground), data->shading);
-               clutter_actor_set_size (data->midground, clutter_actor_get_width (renderer->stage),
-                                                        clutter_actor_get_height (renderer->stage));
+
+               clutter_container_add_actor (
+                   CLUTTER_CONTAINER (data->midground), data->shading);
+               clutter_actor_set_size (data->midground,
+                                    clutter_actor_get_width (renderer->stage),
+                                    clutter_actor_get_height (renderer->stage));
              }
+
            g_object_set (data->shading,
-                  "depth", -0.01,
-                  "x", shading_x,
-                  "y", shading_y,
+                  "depth",  -0.01,
+                  "x",      shading_x,
+                  "y",      shading_y,
                   "opacity", (int)(point->shading_opacity*255),
-                  "color", &color,
-                  "width", shading_width,
+                  "color",  &color,
+                  "width",  shading_width,
                   "height", shading_height,
                   NULL);
          }
@@ -1038,6 +1074,7 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
 
       if (!backwards)
         clutter_actor_raise_top (data->json_slide);
+
       clutter_actor_show (data->json_slide);
       clutter_state_set_state (data->state, "show");
     }
@@ -1050,27 +1087,30 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
    clutter_color_from_string (&color, point->text_color);
    g_object_set (renderer->commandline,
                  "font-name", point->font,
-                 "text", point->command?point->command:"",
-                 "color", &color,
+                 "text",      point->command?point->command:"",
+                 "color",     &color,
                  NULL);
+
    color.alpha *= 0.33;
    g_object_set (renderer->commandline,
                  "selection-color", &color,
                  NULL);
 
    clutter_actor_get_size (renderer->commandline, &text_width, &text_height);
+
    if (point->position == CLUTTER_GRAVITY_SOUTH ||
        point->position == CLUTTER_GRAVITY_SOUTH_WEST)
      text_y = clutter_actor_get_height (renderer->stage) * 0.05;
    else
      text_y = clutter_actor_get_height (renderer->stage) * 0.95 - text_height;
+
    text_x = clutter_actor_get_width (renderer->stage) * 0.05;
 
 
    g_object_set (renderer->commandline,
-          "x", text_x,
-          "y", text_y,
-          NULL);
+                 "x", text_x,
+                 "y", text_y,
+                 NULL);
    clutter_actor_animate (renderer->commandline,
           CLUTTER_EASE_OUT_QUINT, 1000,
           "opacity", point->command?(gint)(0xff*0.33):0,
@@ -1095,9 +1135,11 @@ static gboolean
 reload (gpointer data)
 {
   ClutterRenderer *renderer = data;
-  char   *text = NULL;
+  char            *text     = NULL;
+
   if (!g_file_get_contents (renderer->path, &text, NULL, NULL))
     g_error ("failed to load slides from %s\n", renderer->path);
+
   renderer->rest_y = STARTPOS;
   pp_parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
@@ -1115,6 +1157,7 @@ file_changed (GFileMonitor      *monitor,
 {
   if (reload_tag)
     g_source_remove (reload_tag);
+
   reload_tag = g_timeout_add (200, reload, renderer);
 }
 
