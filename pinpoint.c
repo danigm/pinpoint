@@ -313,19 +313,6 @@ pp_get_shading_position_size (float stage_width,
 void     pp_parse_slides  (PinPointRenderer *renderer,
                            const char       *slide_src);
 
-static inline char *my_strchr_coz_gcc_is_broken (const char *s, int c)
-{
-  /* by directly using strchr in the below code gcc balks out with the
-   * following error :
-   *
-   * pinpoint.c: In function ‘parse_setting’:
-   * pinpoint.c:358:58: error: expected expression before ‘)’ token
-   *
-   * .. for the expansion of the hacky float macro below.
-   */
-  return strchr (s, c);
-}
-
 /*
  * Parsing
  */
@@ -343,9 +330,9 @@ parse_setting (PinPointPoint *point,
 #define END_PARSER   }
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
-#define char g_intern_string (my_strchr_coz_gcc_is_broken (setting, '=') + 1)
-#define float g_ascii_strtod (my_strchr_coz_gcc_is_broken (setting, '=') + 1, NULL)
-#define enum(r,t,s) \
+#define STRING  g_intern_string (strchr (setting, '=') + 1)
+#define FLOAT   g_ascii_strtod (strchr (setting, '=') + 1, NULL)
+#define ENUM(r,t,s) \
   do { \
       int _i; \
       EnumDescription *_d = t##_desc; \
@@ -356,14 +343,14 @@ parse_setting (PinPointPoint *point,
   } while (0)
 
   START_PARSER
-  IF_PREFIX("stage-color=") point->stage_color = char;
-  IF_PREFIX("font=")        point->font = char;
-  IF_PREFIX("text-color=")  point->text_color = char;
-  IF_PREFIX("text-align=")  enum(point->text_align, PPTextAlign, char);
-  IF_PREFIX("shading-color=") point->shading_color = char;
-  IF_PREFIX("shading-opacity=") point->shading_opacity = float;
-  IF_PREFIX("command=")    point->command = char;
-  IF_PREFIX("transition=") point->transition = char;
+  IF_PREFIX("stage-color=") point->stage_color = STRING;
+  IF_PREFIX("font=")        point->font = STRING;
+  IF_PREFIX("text-color=")  point->text_color = STRING;
+  IF_PREFIX("text-align=")  ENUM(point->text_align, PPTextAlign, STRING);
+  IF_PREFIX("shading-color=") point->shading_color = STRING;
+  IF_PREFIX("shading-opacity=") point->shading_opacity = FLOAT;
+  IF_PREFIX("command=")    point->command = STRING;
+  IF_PREFIX("transition=") point->transition = STRING;
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
   IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
   IF_EQUAL("stretch")      point->bg_scale = PP_BG_STRETCH;
