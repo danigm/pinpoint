@@ -37,7 +37,7 @@ GList *pp_slidep      = NULL; /* current slide */
 typedef struct
 {
   const char *name;
-  int value;
+  int         value;
 } EnumDescription;
 
 static EnumDescription PPTextAlign_desc[] =
@@ -72,9 +72,9 @@ static PinPointPoint default_point = {
   .data = NULL,
 };
 
-char      *pp_output_filename;
-gboolean   pp_fullscreen = FALSE;
-gboolean   pp_maximized = FALSE;
+char     *pp_output_filename = NULL;
+gboolean  pp_fullscreen      = FALSE;
+gboolean  pp_maximized       = FALSE;
 
 static GOptionEntry entries[] =
 {
@@ -101,9 +101,9 @@ main (int    argc,
       char **argv)
 {
   PinPointRenderer *renderer;
-  GOptionContext *context;
+  GOptionContext   *context;
   GError *error = NULL;
-  char   *text = NULL;
+  char   *text  = NULL;
 
   renderer = pp_clutter_renderer ();
 
@@ -120,7 +120,9 @@ main (int    argc,
   if (!argv[1])
     {
       g_print ("usage: %s [options] <presentation>\n", argv[0]);
-      text = g_strdup ("[no-markup][transition=sheet][red]\n--\nusage: pinpoint [options] <presentation.txt>\n");
+      text = g_strdup ("[no-markup][transition=sheet][red]\n"
+                       "--\n"
+                       "usage: pinpoint [options] <presentation.txt>\n");
     }
   else
     {
@@ -265,6 +267,7 @@ pp_get_text_position_scale (PinPointPoint *point,
         x = (stage_width - w * sx) / 2;
         break;
     }
+
   switch (point->position)
     {
       case CLUTTER_GRAVITY_SOUTH:
@@ -319,7 +322,7 @@ void     pp_parse_slides  (PinPointRenderer *renderer,
 
 static void
 parse_setting (PinPointPoint *point,
-               const gchar   *setting)
+               const char    *setting)
 {
 /* C Preprocessor macros implemeting a mini language for interpreting
  * pinpoint key=value pairs
@@ -369,22 +372,22 @@ parse_setting (PinPointPoint *point,
   DEFAULT                  point->bg = g_intern_string (setting);
   END_PARSER
 
-/* undefine all the overrides, returning us to regular C */
+/* undefine the overrides, returning us to regular C */
 #undef START_PARSER
 #undef END_PARSER
 #undef DEFAULT
 #undef IF_PREFIX
 #undef IF_EQUAL
-#undef float
-#undef char
-#undef enum
+#undef FLOAT
+#undef CHAR
+#undef ENUM
 }
 
 static void
 parse_config (PinPointPoint *point,
               const char    *config)
 {
-  GString *str = g_string_new ("");
+  GString    *str = g_string_new ("");
   const char *p;
 
   for (p = config; *p; p++)
@@ -436,6 +439,20 @@ pp_is_color (const char *string)
   return clutter_color_from_string (&color, string);
 }
 
+static gboolean
+str_has_video_suffix (const char *string)
+{
+  char *video_extensions[] =
+    {".avi", ".ogg", ".ogv", ".mpg",  ".flv", ".mpeg",
+     ".mov", ".mp4", ".wmv", ".webm", ".mkv", NULL};
+  char **ext;
+
+  for (ext = video_extensions; *ext; ext ++)
+    if (g_str_has_suffix (string, *ext))
+      return TRUE;
+  return FALSE;
+}
+
 void
 pp_parse_slides (PinPointRenderer *renderer,
                  const char       *slide_src)
@@ -457,7 +474,9 @@ pp_parse_slides (PinPointRenderer *renderer,
       int lineno=0;
       /* compute slide no that has changed */
       for (pos = 0, slideno = 0;
-           slide_src[pos] && renderer->source[pos] && slide_src[pos]==renderer->source[pos]
+           slide_src[pos] &&
+           renderer->source[pos] &&
+           slide_src[pos]==renderer->source[pos]
            ; pos ++)
         {
           switch (slide_src[pos])
@@ -485,127 +504,117 @@ pp_parse_slides (PinPointRenderer *renderer,
   pp_slides = NULL;
   point = pin_point_new (renderer);
 
-  /* parse the slides, constructing lists of objects, adding all generated
-   * actors to the stage
+  /* parse the slides, constructing lists of slide/point objects
    */
   for (p = slide_src; *p; p++)
     {
       switch (*p)
-      {
-        case '\\': /* escape the next char */
-          p++;
-          startofline = FALSE;
-          if (*p)
+        {
+          case '\\': /* escape the next char */
+            p++;
+            startofline = FALSE;
+            if (*p)
+              g_string_append_c (slide_str, *p);
+            break;
+          case '\n':
+            startofline = TRUE;
             g_string_append_c (slide_str, *p);
-          break;
-        case '\n':
-          startofline = TRUE;
-          g_string_append_c (slide_str, *p);
-          break;
-        case '-': /* slide seperator */
-          close_last_slide:
-          if (startofline)
-            {
-              startofline = FALSE;
-              next_point = pin_point_new (renderer);
+            break;
+          case '-': /* slide seperator */
+            close_last_slide:
+            if (startofline)
+              {
+                startofline = FALSE;
+                next_point = pin_point_new (renderer);
 
-              g_string_assign (setting_str, "");
-              while (*p && *p!='\n')  /* until newline */
-                {
-                  g_string_append_c (setting_str, *p);
-                  p++;
-                }
-              parse_config (next_point, setting_str->str);
+                g_string_assign (setting_str, "");
+                while (*p && *p!='\n')  /* until newline */
+                  {
+                    g_string_append_c (setting_str, *p);
+                    p++;
+                  }
+                parse_config (next_point, setting_str->str);
 
-              if (!gotconfig)
-                {
-                  parse_config (&default_point, slide_str->str);
-                  /* copy the default point except the per-slide allocated
-                   * data (void *) */
-                  memcpy (point, &default_point,
-                          sizeof (PinPointPoint) - sizeof (void *));
-                  parse_config (point, setting_str->str);
-                  gotconfig = TRUE;
-                  g_string_assign (slide_str, "");
-                  g_string_assign (setting_str, "");
-                }
-              else
-                {
-                  if (point->bg && point->bg[0])
+                if (!gotconfig)
+                  {
+                    parse_config (&default_point, slide_str->str);
+                    /* copy the default point except the per-slide allocated
+                     * data (void *) */
+                    memcpy (point, &default_point,
+                            sizeof (PinPointPoint) - sizeof (void *));
+                    parse_config (point, setting_str->str);
+                    gotconfig = TRUE;
+                    g_string_assign (slide_str, "");
+                    g_string_assign (setting_str, "");
+                  }
+                else
+                  {
+                    if (point->bg && point->bg[0])
+                      {
+                        char *filename = g_strdup (point->bg);
+                        int i = 0;
+
+                        while (filename[i])
+                          {
+                            filename[i] = tolower(filename[i]);
+                            i++;
+                          }
+                        if (str_has_video_suffix (filename))
+                          point->bg_type = PP_BG_VIDEO;
+                        else if (g_str_has_suffix (filename, ".svg"))
+                          point->bg_type = PP_BG_SVG;
+                        else if (pp_is_color (point->bg))
+                          point->bg_type = PP_BG_COLOR;
+                        else
+                          point->bg_type = PP_BG_IMAGE;
+                        g_free (filename);
+                      }
+
                     {
-                      gchar *filename = g_strdup (point->bg);
-                      int i = 0;
+                      char *str = slide_str->str;
 
-                      while (filename[i])
-                        {
-                          filename[i] = tolower(filename[i]);
-                          i++;
-                        }
-                      if (g_str_has_suffix (filename, ".avi")
-                       || g_str_has_suffix (filename, ".ogg")
-                       || g_str_has_suffix (filename, ".ogv")
-                       || g_str_has_suffix (filename, ".mpg")
-                       || g_str_has_suffix (filename, ".flv")
-                       || g_str_has_suffix (filename, ".mpeg")
-                       || g_str_has_suffix (filename, ".mov")
-                       || g_str_has_suffix (filename, ".mp4")
-                       || g_str_has_suffix (filename, ".wmv")
-                       || g_str_has_suffix (filename, ".webm")
-                       || g_str_has_suffix (filename, ".mkv"))
-                        point->bg_type = PP_BG_VIDEO;
-                      else if (g_str_has_suffix (filename, ".svg"))
-                        point->bg_type = PP_BG_SVG;
-                      else if (pp_is_color (point->bg))
-                        point->bg_type = PP_BG_COLOR;
-                      else
-                        point->bg_type = PP_BG_IMAGE;
-                      g_free (filename);
+                    /* trim newlines from start and end. ' ' can be used in the
+                     * insane case that you actually want blank lines before or
+                     * after the text of a slide */
+                      while (*str == '\n') str++;
+                      while ( slide_str->str[strlen(slide_str->str)-1]=='\n')
+                        slide_str->str[strlen(slide_str->str)-1]='\0';
+
+                      point->text = g_intern_string (str);
                     }
 
-                  {
-                    char *str = slide_str->str;
+                    renderer->make_point (renderer, point);
 
-                  /* trim newlines from start and end. ' ' can be used in the
-                   * insane case that you actually want blank lines before or after
-                   * the text of a slide */
-                    while (*str == '\n') str++;
-                    while ( slide_str->str[strlen(slide_str->str)-1]=='\n')
-                      slide_str->str[strlen(slide_str->str)-1]='\0';
+                    g_string_assign (slide_str, "");
+                    g_string_assign (setting_str, "");
 
-                    point->text = g_intern_string (str);
+                    pp_slides = g_list_append (pp_slides, point);
+                    point = next_point;
                   }
-
-                  renderer->make_point (renderer, point);
-
-                  g_string_assign (slide_str, "");
-                  g_string_assign (setting_str, "");
-
-                  pp_slides = g_list_append (pp_slides, point);
-                  point = next_point;
+              }
+            else
+              {
+                g_string_append_c (slide_str, *p);
+              }
+            break;
+        case '#': /* comment */
+          if (startofline)
+            {
+              char *end = strchr (p, '\n');
+              if (end)
+                {
+                  p = end;
+                  break;
                 }
             }
-          else
-            {
-              g_string_append_c (slide_str, *p);
-            }
-          break;
-      case '#': /* comment */
-        if (startofline)
-          {
-            char *end = strchr (p, '\n');
-            if (end)
-              {
-                p = end;
-                break;
-              }
-          }
-        /* flow through */
-        default:
-          startofline = FALSE;
-          g_string_append_c (slide_str, *p);
-          break;
-      }
+          /* flow through */
+          default:
+            startofline = FALSE;
+            g_string_append_c (slide_str, *p);
+            break;
+        }
     }
+
   if (!done)
     {
       done = TRUE;
