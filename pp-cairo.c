@@ -41,17 +41,17 @@
 typedef struct _CairoRenderer
 {
   PinPointRenderer renderer;
-  gchar      *path;
-  GHashTable *surfaces;         /* keep cairo_surface_t around for source
-                                   images as we wantt to only include one
+  char            *path;
+  GHashTable      *surfaces;    /* keep cairo_surface_t around for source
+                                   images as we want to only include one
                                    instance of the image when using it in
                                    several slides */
-  GHashTable *svgs;             /* keep RsvgHandles around for source
+  GHashTable      *svgs;        /* keep RsvgHandles around for source
                                    svg backgrounds as we want to only
                                    include one instance of the image
                                    when using it in several slides */
-  cairo_surface_t  *surface;
-  cairo_t *ctx;
+  cairo_surface_t *surface;
+  cairo_t         *ctx;
 } CairoRenderer;
 
 typedef struct
@@ -95,17 +95,18 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
 static cairo_surface_t *
 _cairo_new_surface_from_pixbuf (const GdkPixbuf *pixbuf)
 {
-  gint width = gdk_pixbuf_get_width (pixbuf);
-  gint height = gdk_pixbuf_get_height (pixbuf);
-  guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
-  int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-  int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-  int cairo_stride;
-  guchar *cairo_pixels;
-  cairo_format_t format;
+  int              width         = gdk_pixbuf_get_width (pixbuf);
+  int              height        = gdk_pixbuf_get_height (pixbuf);
+  guchar          *gdk_pixels    = gdk_pixbuf_get_pixels (pixbuf);
+  int              gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+  int              n_channels    = gdk_pixbuf_get_n_channels (pixbuf);
+  int              cairo_stride;
+  guchar          *cairo_pixels;
+
+  cairo_format_t   format;
   cairo_surface_t *surface;
-  static const cairo_user_data_key_t key;
-  int j;
+  static const     cairo_user_data_key_t key;
+  int              j;
 
   if (n_channels == 3)
     format = CAIRO_FORMAT_RGB24;
@@ -127,56 +128,55 @@ _cairo_new_surface_from_pixbuf (const GdkPixbuf *pixbuf)
       guchar *q = cairo_pixels;
 
       if (n_channels == 3)
-	{
-	  guchar *end = p + 3 * width;
+	      {
+          guchar *end = p + 3 * width;
 
-	  while (p < end)
-	    {
+          while (p < end)
+            {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-	      q[0] = p[2];
-	      q[1] = p[1];
-	      q[2] = p[0];
+              q[0] = p[2];
+              q[1] = p[1];
+              q[2] = p[0];
 #else
-	      q[1] = p[0];
-	      q[2] = p[1];
-	      q[3] = p[2];
+              q[1] = p[0];
+              q[2] = p[1];
+              q[3] = p[2];
 #endif
-	      p += 3;
-	      q += 4;
-	    }
-	}
+              p += 3;
+              q += 4;
+            }
+	      }
       else
-	{
-	  guchar *end = p + 4 * width;
-	  guint t1,t2,t3;
+        {
+          guchar *end = p + 4 * width;
+          guint t1,t2,t3;
 
 #define MULT(d,c,a,t) G_STMT_START { t = c * a + 0x7f; d = ((t >> 8) + t) >> 8; } G_STMT_END
 
-	  while (p < end)
-	    {
+          while (p < end)
+            {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-	      MULT(q[0], p[2], p[3], t1);
-	      MULT(q[1], p[1], p[3], t2);
-	      MULT(q[2], p[0], p[3], t3);
-	      q[3] = p[3];
+              MULT(q[0], p[2], p[3], t1);
+              MULT(q[1], p[1], p[3], t2);
+              MULT(q[2], p[0], p[3], t3);
+              q[3] = p[3];
 #else
-	      q[0] = p[3];
-	      MULT(q[1], p[0], p[3], t1);
-	      MULT(q[2], p[1], p[3], t2);
-	      MULT(q[3], p[2], p[3], t3);
+              q[0] = p[3];
+              MULT(q[1], p[0], p[3], t1);
+              MULT(q[2], p[1], p[3], t2);
+              MULT(q[3], p[2], p[3], t3);
 #endif
 
-	      p += 4;
-	      q += 4;
-	    }
+              p += 4;
+              q += 4;
+            }
 
 #undef MULT
-	}
+        }
 
       gdk_pixels += gdk_rowstride;
       cairo_pixels += cairo_stride;
     }
-
   return surface;
 }
 
@@ -208,8 +208,8 @@ _cairo_get_surface (CairoRenderer *renderer,
                     const char    *file)
 {
   cairo_surface_t *surface;
-  GdkPixbuf *pixbuf;
-  GError *error = NULL;
+  GdkPixbuf       *pixbuf;
+  GError          *error = NULL;
 
   surface = g_hash_table_lookup (renderer->surfaces, file);
   if (surface)
@@ -252,7 +252,7 @@ _cairo_get_svg (CairoRenderer *renderer,
                 const char    *file)
 {
   RsvgHandle *svg;
-  GError *error = NULL;
+  GError     *error = NULL;
 
   svg = g_hash_table_lookup (renderer->svgs, file);
   if (svg)
@@ -281,12 +281,12 @@ static void
 _cairo_render_background (CairoRenderer *renderer,
                           PinPointPoint *point)
 {
-  gchar *full_path = NULL;
-  const gchar *file = point->bg;
+  char       *full_path = NULL;
+  const char *file = point->bg;
 
   if (point->bg_type != PP_BG_COLOR && renderer->path && file)
     {
-      gchar *dir = g_path_get_dirname (renderer->path);
+      char *dir = g_path_get_dirname (renderer->path);
       full_path = g_build_filename (dir, file, NULL);
       g_free (dir);
 
@@ -351,7 +351,7 @@ _cairo_render_background (CairoRenderer *renderer,
     case PP_BG_VIDEO:
       {
 #ifdef USE_CLUTTER_GST
-        GdkPixbuf *pixbuf;
+        GdkPixbuf       *pixbuf;
         cairo_surface_t *surface;
         float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
         GCancellable* cancellable = g_cancellable_new ();
@@ -419,12 +419,13 @@ static void
 _cairo_render_text (CairoRenderer *renderer,
                     PinPointPoint *point)
 {
-  PangoLayout *layout;
+  PangoLayout          *layout;
   PangoFontDescription *desc;
-  PangoRectangle logical_rect = { 0, };
-  ClutterColor text_color, shading_color;
+  PangoRectangle        logical_rect = { 0, };
+  ClutterColor          text_color,
+                        shading_color;
 
-  float text_width, text_height, text_x, text_y, text_scale;
+  float text_x,    text_y,    text_width,    text_height;
   float shading_x, shading_y, shading_width, shading_height;
 
   layout = pango_cairo_create_layout (renderer->ctx);
@@ -496,7 +497,7 @@ static void
 cairo_renderer_run (PinPointRenderer *pp_renderer)
 {
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
-  GList *cur;
+  GList         *cur;
 
   for (cur = pp_slides; cur; cur = g_list_next (cur))
     _cairo_render_page (renderer, cur->data);
@@ -524,7 +525,7 @@ cairo_renderer_make_point (PinPointRenderer *pp_renderer,
     {
       ClutterColor color;
 
-      ret =  clutter_color_from_string (&color, point->bg);
+      ret = clutter_color_from_string (&color, point->bg);
     }
 
   return ret;
