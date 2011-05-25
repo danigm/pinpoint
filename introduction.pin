@@ -1,6 +1,7 @@
 #!/usr/bin/env pinpoint
 [font=Sans 50px]
 [bg.jpg]
+[duration=23]
 
 - The bits above this point are defaults for every slide in the presentation
 Welcome to pinpoint

@@ -451,7 +451,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   GFileMonitor *monitor;
   ClutterActor *stage;
 
-  renderer->speaker_mode = TRUE; /* enable rendering of speaker window */
+  if (pp_speakermode)
+    renderer->speaker_mode = TRUE; /* enable rendering of speaker window */
 
   renderer->stage = stage = clutter_stage_new ();
   renderer->root = clutter_group_new ();

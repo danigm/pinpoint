@@ -103,9 +103,11 @@ struct _PinPointPoint
   void              *data;            /* the renderer can attach data here */
 };
 
-extern char      *pp_output_filename;
-extern gboolean   pp_fullscreen;
-extern gboolean   pp_maximized;
+extern char     *pp_output_filename;
+extern gboolean  pp_fullscreen;
+extern gboolean  pp_maximized;
+extern gboolean  pp_speakermode;
+extern gboolean  pp_rehearse;
 
 extern GList         *pp_slides;  /* list of slide text */
 extern GList         *pp_slidep;  /* current slide */

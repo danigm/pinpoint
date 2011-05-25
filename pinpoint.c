@@ -84,6 +84,8 @@ PinPointPoint *point_defaults = &default_point;
 char     *pp_output_filename = NULL;
 gboolean  pp_fullscreen      = FALSE;
 gboolean  pp_maximized       = FALSE;
+gboolean  pp_speakermode     = FALSE;
+gboolean  pp_rehearse        = FALSE;
 
 static GOptionEntry entries[] =
 {
@@ -94,6 +96,10 @@ static GOptionEntry entries[] =
 "                                         [command=] spawned apps.", NULL},
     { "fullscreen", 'f', 0, G_OPTION_ARG_NONE, &pp_fullscreen,
     "Start in fullscreen mode", NULL},
+    { "speakermode", 's', 0, G_OPTION_ARG_NONE, &pp_speakermode,
+    "Show speakermode window", NULL},
+    { "rehearse", 'r', 0, G_OPTION_ARG_NONE, &pp_rehearse,
+    "Rehearse timings", NULL},
     { "output", 'o', 0, G_OPTION_ARG_STRING, &pp_output_filename,
       "Output presentation to FILE\n"
 "                                         (formats supported: pdf)", "FILE" },
