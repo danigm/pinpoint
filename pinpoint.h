@@ -88,6 +88,10 @@ struct _PinPointPoint
   const char        *text_color;
   gboolean           use_markup;
 
+  gfloat             duration;       /* on slide 0 the duration is the duration of the
+                                        presentation, other slides have a representation
+                                        of their portion of the presentation  */
+
   char              *speaker_notes; /* speaker comments for the slide */
 
   const char        *shading_color;
@@ -103,8 +107,9 @@ extern char      *pp_output_filename;
 extern gboolean   pp_fullscreen;
 extern gboolean   pp_maximized;
 
-extern GList *pp_slides;  /* list of slide text */
-extern GList *pp_slidep;  /* current slide */
+extern GList         *pp_slides;  /* list of slide text */
+extern GList         *pp_slidep;  /* current slide */
+extern PinPointPoint *point_defaults;
 
 void     pp_parse_slides  (PinPointRenderer *renderer,
                            const char       *slide_src);

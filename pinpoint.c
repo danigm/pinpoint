@@ -64,6 +64,8 @@ static PinPointPoint default_point = {
   .text_align = PP_TEXT_LEFT,
   .use_markup = TRUE,
 
+  .duration = 30,
+
   .speaker_notes = NULL,
 
   .shading_color = "black",
@@ -73,6 +75,8 @@ static PinPointPoint default_point = {
   .command = NULL,
   .data = NULL,
 };
+
+PinPointPoint *point_defaults = &default_point;
 
 char     *pp_output_filename = NULL;
 gboolean  pp_fullscreen      = FALSE;
@@ -157,8 +161,8 @@ main (int    argc,
 #endif
     }
 
-  renderer->init (renderer, argv[1]);
 
+  renderer->init (renderer, argv[1]);
   pp_parse_slides (renderer, text);
   g_free (text);
 
@@ -354,6 +358,7 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("text-align=")  ENUM(point->text_align, PPTextAlign, STRING);
   IF_PREFIX("shading-color=") point->shading_color = STRING;
   IF_PREFIX("shading-opacity=") point->shading_opacity = FLOAT;
+  IF_PREFIX("duration=")   point->duration = FLOAT;
   IF_PREFIX("command=")    point->command = STRING;
   IF_PREFIX("transition=") point->transition = STRING;
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
