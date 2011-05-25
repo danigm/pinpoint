@@ -64,6 +64,8 @@ static PinPointPoint default_point = {
   .text_align = PP_TEXT_LEFT,
   .use_markup = TRUE,
 
+  .speaker_notes = NULL,
+
   .shading_color = "black",
   .shading_opacity = 0.66,
   .transition = NULL,
@@ -415,6 +417,10 @@ pin_point_free (PinPointRenderer *renderer,
 {
   if (renderer->free_data)
     renderer->free_data (renderer, point->data);
+  if (point->speaker_notes)
+    {
+      g_free (point->speaker_notes);
+    }
   g_free (point);
 }
 
@@ -458,12 +464,13 @@ pp_parse_slides (PinPointRenderer *renderer,
                  const char       *slide_src)
 {
   const char *p;
-  int         slideno = 0;
-  gboolean    done = FALSE;
+  int         slideno     = 0;
+  gboolean    done        = FALSE;
   gboolean    startofline = TRUE;
-  gboolean    gotconfig = FALSE;
-  GString    *slide_str = g_string_new ("");
+  gboolean    gotconfig   = FALSE;
+  GString    *slide_str   = g_string_new ("");
   GString    *setting_str = g_string_new ("");
+  GString    *notes_str   = g_string_new ("");
   GList      *s;
   PinPointPoint *point, *next_point;
 
@@ -546,6 +553,7 @@ pp_parse_slides (PinPointRenderer *renderer,
                     gotconfig = TRUE;
                     g_string_assign (slide_str, "");
                     g_string_assign (setting_str, "");
+                    g_string_assign (notes_str, "");
                   }
                 else
                   {
@@ -582,11 +590,14 @@ pp_parse_slides (PinPointRenderer *renderer,
 
                       point->text = g_intern_string (str);
                     }
+                    if (notes_str->str[0])
+                      point->speaker_notes = g_strdup (notes_str->str);
 
                     renderer->make_point (renderer, point);
 
                     g_string_assign (slide_str, "");
                     g_string_assign (setting_str, "");
+                    g_string_assign (notes_str, "");
 
                     pp_slides = g_list_append (pp_slides, point);
                     point = next_point;
@@ -600,9 +611,15 @@ pp_parse_slides (PinPointRenderer *renderer,
         case '#': /* comment */
           if (startofline)
             {
-              char *end = strchr (p, '\n');
+              const char *end = p + 1;
+              while (*end != '\n' && *end != '\0')
+                {
+                  g_string_append_c (notes_str, *end);
+                  end++;
+                }
               if (end)
                 {
+                  g_string_append_c (notes_str, '\n');
                   p = end;
                   break;
                 }
@@ -623,6 +640,7 @@ pp_parse_slides (PinPointRenderer *renderer,
 
   g_string_free (slide_str, TRUE);
   g_string_free (setting_str, TRUE);
+  g_string_free (notes_str, TRUE);
 
   if (g_list_nth (pp_slides, slideno))
     pp_slidep = g_list_nth (pp_slides, slideno);

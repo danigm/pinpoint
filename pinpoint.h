@@ -35,9 +35,9 @@ typedef struct _PinPointRenderer PinPointRenderer;
 
 typedef enum
 {
-  PP_TEXT_LEFT = PANGO_ALIGN_LEFT,
+  PP_TEXT_LEFT   = PANGO_ALIGN_LEFT,
   PP_TEXT_CENTER = PANGO_ALIGN_CENTER,
-  PP_TEXT_RIGHT = PANGO_ALIGN_RIGHT
+  PP_TEXT_RIGHT  = PANGO_ALIGN_RIGHT
 } PPTextAlign;
 
 typedef enum
@@ -87,6 +87,8 @@ struct _PinPointPoint
   PPTextAlign        text_align;
   const char        *text_color;
   gboolean           use_markup;
+
+  char              *speaker_notes; /* speaker comments for the slide */
 
   const char        *shading_color;
   float              shading_opacity;
