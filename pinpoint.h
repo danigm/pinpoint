@@ -103,8 +103,8 @@ extern char      *pp_output_filename;
 extern gboolean   pp_fullscreen;
 extern gboolean   pp_maximized;
 
-extern GList *pp_slides;
-extern GList *pp_slidep;
+extern GList *pp_slides;  /* list of slide text */
+extern GList *pp_slidep;  /* current slide */
 
 void     pp_parse_slides  (PinPointRenderer *renderer,
                            const char       *slide_src);
