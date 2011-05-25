@@ -50,7 +50,8 @@ static EnumDescription PPTextAlign_desc[] =
 
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
 
-static PinPointPoint default_point = {
+/* pinpoint defaults */
+static PinPointPoint pin_default_point = {
   .stage_color = "black",
 
   .bg = "NULL",
@@ -75,6 +76,8 @@ static PinPointPoint default_point = {
   .command = NULL,
   .data = NULL,
 };
+
+static PinPointPoint default_point;
 
 PinPointPoint *point_defaults = &default_point;
 
@@ -101,6 +104,7 @@ PinPointRenderer *pp_clutter_renderer (void);
 #ifdef HAVE_PDF
 PinPointRenderer *pp_cairo_renderer   (void);
 #endif
+static char * pp_serialize (void);
 
 int
 main (int    argc,
@@ -111,6 +115,7 @@ main (int    argc,
   GError *error = NULL;
   char   *text  = NULL;
 
+  memcpy (&default_point, &pin_default_point, sizeof (default_point));
   renderer = pp_clutter_renderer ();
 
   context = g_option_context_new ("- Presentations made easy");
@@ -165,6 +170,9 @@ main (int    argc,
   renderer->init (renderer, argv[1]);
   pp_parse_slides (renderer, text);
   g_free (text);
+
+  //printf ("%s", pp_serialize());
+  //return 0;
 
   renderer->run (renderer);
   renderer->finalize (renderer);
@@ -386,7 +394,7 @@ parse_setting (PinPointPoint *point,
 #undef IF_PREFIX
 #undef IF_EQUAL
 #undef FLOAT
-#undef CHAR
+#undef STRING
 #undef ENUM
 }
 
@@ -462,6 +470,120 @@ str_has_video_suffix (const char *string)
     if (g_str_has_suffix (string, *ext))
       return TRUE;
   return FALSE;
+}
+
+static void serialize_slide_config (GString       *str,
+                                    PinPointPoint *point,
+                                    PinPointPoint *reference,
+                                    const char    *separator)
+{
+#define STRING(v,n) \
+  if (point->v != reference->v) \
+    g_string_append_printf (str, "%s[" n "%s]", separator, point->v)
+#define FLOAT(v,n) \
+  if (point->v != reference->v) \
+    g_string_append_printf (str, "%s[" n "%f]", separator, point->v)
+
+  STRING(stage_color, "stage-color=");
+  STRING(bg, "");
+
+  if (point->bg_scale != reference->bg_scale)
+    {
+      g_string_append (str, separator);
+      switch (point->bg_scale)
+        {
+          case PP_BG_FILL:     g_string_append (str, "[fill]");     break;
+          case PP_BG_FIT:      g_string_append (str, "[fit]");      break;
+          case PP_BG_STRETCH:  g_string_append (str, "[stretch]");  break;
+          case PP_BG_UNSCALED: g_string_append (str, "[unscaled]"); break;
+        }
+    }
+
+  if (point->position != reference->position)
+    {
+      g_string_append (str, separator);
+      switch (point->position)
+        {
+          case CLUTTER_GRAVITY_CENTER:
+            g_string_append (str, "[center]");break;
+          case CLUTTER_GRAVITY_NORTH:
+            g_string_append (str, "[top]");break;
+          case CLUTTER_GRAVITY_SOUTH:
+            g_string_append (str, "[bottom]");break;
+          case CLUTTER_GRAVITY_WEST:
+            g_string_append (str, "[left]");break;
+          case CLUTTER_GRAVITY_EAST:
+            g_string_append (str, "[right]");break;
+          case CLUTTER_GRAVITY_NORTH_WEST:
+            g_string_append (str, "[top-left]");break;
+          case CLUTTER_GRAVITY_NORTH_EAST:
+            g_string_append (str, "[top-right]");break;
+          case CLUTTER_GRAVITY_SOUTH_WEST:
+            g_string_append (str, "[bottom-left]");break;
+          case CLUTTER_GRAVITY_SOUTH_EAST:
+            g_string_append (str, "[bottom-right]");break;
+        }
+    }
+
+  STRING(font,"font=");
+  STRING(text_color,"text-color=");
+  STRING(shading_color,"shading-color=");
+  FLOAT(shading_opacity, "shading-opacity=");
+
+  STRING(transition,"transition=");
+  STRING(command,"command=");
+  FLOAT(duration, "duration="); /* XXX: probably needs special treatment */
+
+#undef FLOAT
+#undef STRING
+}
+
+
+static void serialize_slide (GString *str,
+                             PinPointPoint *point)
+{
+  g_string_append_c (str, '\n');
+  g_string_append (str, "--");
+  serialize_slide_config (str, point, &default_point, " ");
+  g_string_append (str, "\n");
+
+  g_string_append_printf (str, "%s\n", point->text);
+
+  if (point->speaker_notes)
+    {
+      char *p;
+      g_string_append_c (str, '#');
+      for (p = point->speaker_notes; *p; p++)
+        {
+          if (*p == '\n')
+            {
+              g_string_append_c (str, '\n');
+              if (*(p+1))
+                g_string_append_c (str, '#');
+            }
+          else
+            {
+              g_string_append_c (str, *p);
+            }
+        }
+    }
+}
+
+static char * pp_serialize (void)
+{
+  GString *str = g_string_new ("#!/usr/bin/env pinpoint\n");
+  char *ret;
+  GList *iter;
+
+  serialize_slide_config (str, &default_point, &pin_default_point, "\n");
+
+  for (iter = pp_slides; iter; iter = iter->next)
+    {
+      serialize_slide (str, iter->data);
+    }
+  ret = str->str;
+  g_string_free (str, FALSE);
+  return ret;
 }
 
 void
