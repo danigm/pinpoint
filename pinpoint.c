@@ -172,18 +172,32 @@ main (int    argc,
 #endif
     }
 
+  if (!argv[1])
+    pp_rehearse = FALSE;
 
   renderer->init (renderer, argv[1]);
   pp_parse_slides (renderer, text);
   g_free (text);
 
-  //printf ("%s", pp_serialize());
-  //return 0;
+  if (pp_rehearse)
+    {
+      printf ("Running in rehearsal mode, press ctrl+C to abort without saving timings back to %s\n", argv[1]);
+    }
 
   renderer->run (renderer);
   renderer->finalize (renderer);
   if (renderer->source)
     g_free (renderer->source);
+  if (pp_rehearse)
+    {
+      GError *error = NULL;
+      char *content = pp_serialize ();
+      if (!g_file_set_contents (argv[1], content, -1, &error))
+        {
+          printf ("Failed to save to %s %s\n", argv[1], error->message);
+        }
+      g_free (content);
+    }
 
   g_list_free (pp_slides);
 
@@ -505,6 +519,17 @@ static void serialize_slide_config (GString       *str,
         }
     }
 
+  if (point->text_align != reference->text_align)
+    {
+      g_string_append (str, separator);
+      switch (point->text_align)
+        {
+          case PP_TEXT_LEFT:  g_string_append (str, "[text-align=left]");break;
+          case PP_TEXT_CENTER:g_string_append (str, "[text-align=center]");break;
+          case PP_TEXT_RIGHT: g_string_append (str, "[text-align=right]");break;
+        }
+    }
+
   if (point->position != reference->position)
     {
       g_string_append (str, separator);
@@ -538,7 +563,18 @@ static void serialize_slide_config (GString       *str,
 
   STRING(transition,"transition=");
   STRING(command,"command=");
-  FLOAT(duration, "duration="); /* XXX: probably needs special treatment */
+  if (point->duration != 0.0)
+    FLOAT(duration, "duration="); /* XXX: probably needs special treatment */
+
+
+  if (point->use_markup != reference->use_markup)
+    {
+      g_string_append (str, separator);
+      if (point->use_markup)
+        g_string_append (str, "[markup]");
+      else
+        g_string_append (str, "[no-markup]");
+    }
 
 #undef FLOAT
 #undef STRING
@@ -733,6 +769,8 @@ pp_parse_slides (PinPointRenderer *renderer,
                     g_string_assign (notes_str, "");
 
                     pp_slides = g_list_append (pp_slides, point);
+                    if (pp_rehearse)
+                      point->duration = 0.0;
                     point = next_point;
                   }
               }
