@@ -55,6 +55,7 @@ static ClutterColor c_prog_time =  {0x66,0x66,0x66,0xff};
 static ClutterColor black = {0x00,0x00,0x00,0xff};
 static ClutterColor gray  = {0x77,0x77,0x77,0xff};
 static ClutterColor white = {0xff,0xff,0xff,0xff};
+static ClutterColor red   = {0xff,0x00,0x00,0xff};
 
 typedef struct _ClutterRenderer
 {
@@ -73,21 +74,36 @@ typedef struct _ClutterRenderer
   ClutterActor    *commandline;
   ClutterActor    *commandline_shading;
 
-  gboolean         speaker_mode;
-  ClutterActor    *speaker_screen;
-  ClutterActor    *speaker_slide_info;
-
-  ClutterActor    *speaker_time_remaining;
-
   GTimer          *timer;
   gboolean         timer_paused;
   int              total_seconds;
+  gboolean         autoplay;
+
+  gboolean         speaker_mode;
+  ClutterActor    *speaker_screen;
+
+  gdouble          slide_start_time;
+
+  ClutterActor    *speaker_buttons_group;
+  ClutterActor    *speaker_rehearse;
+  ClutterActor    *speaker_autoplay;
+  ClutterActor    *speaker_reset_time;
+  ClutterActor    *speaker_pause_time;
 
   ClutterActor    *speaker_notes;
   ClutterActor    *speaker_clone;
+
+  ClutterActor    *speaker_slide_prog_warning;
+  ClutterActor    *speaker_prog_warning;
+
   ClutterActor    *speaker_prog_bg;
   ClutterActor    *speaker_prog_slide;
   ClutterActor    *speaker_prog_time;
+  ClutterActor    *speaker_time_remaining;/* < should be just minutes */
+
+  ClutterActor    *speaker_slide_prog_bg;
+  ClutterActor    *speaker_slide_prog_time;
+
 
   char *path;               /* path of the file of the GFileMonitor callback */
   float rest_y;             /* where the text can rest */
@@ -342,7 +358,7 @@ static gboolean stage_motion (ClutterActor *actor,
   return FALSE;
 }
 
-#define NORMAL_OPACITY 200
+#define NORMAL_OPACITY 100
 #define HOVER_OPACITY  255
 
 static gboolean
@@ -350,7 +366,9 @@ opacity_hover_enter (ClutterActor *actor,
                      ClutterEvent *event,
                      gpointer      data)
 {
-  clutter_actor_set_opacity (actor, HOVER_OPACITY);
+  clutter_actor_animate (actor, CLUTTER_LINEAR, 200,
+                         "opacity", HOVER_OPACITY,
+                         NULL);
   return FALSE;
 }
 
@@ -360,10 +378,18 @@ opacity_hover_leave (ClutterActor *actor,
                      ClutterEvent *event,
                      gpointer      data)
 {
-  clutter_actor_set_opacity (actor, NORMAL_OPACITY);
+  clutter_actor_animate (actor, CLUTTER_LINEAR, 200,
+                         "opacity", NORMAL_OPACITY,
+                         NULL);
   return FALSE;
 }
 
+#define opacity_hover(o) \
+      clutter_actor_set_opacity (o, NORMAL_OPACITY);\
+      g_signal_connect (o, "enter-event", \
+                        G_CALLBACK (opacity_hover_enter), NULL); \
+      g_signal_connect (o, "leave-event", \
+                        G_CALLBACK (opacity_hover_leave), NULL); \
 
 static gboolean
 elapsed_pressed (ClutterActor *actor,
@@ -383,65 +409,6 @@ elapsed_pressed (ClutterActor *actor,
     }
   return TRUE;
 }
-
-static gfloat prev_x = 0.0;
-static gfloat prev_y = 0.0;
-
-static gboolean
-time_extend_capture (ClutterActor *actor,
-                     ClutterEvent *event,
-                     gpointer      data)
-{
-  ClutterRenderer *renderer = CLUTTER_RENDERER (data);
-  float delta;
-  switch (event->any.type)
-    {
-      case CLUTTER_MOTION:
-        delta = event->motion.x - prev_x;
-        renderer->total_seconds += delta * 20;
-        if (renderer->total_seconds < 0)
-          renderer->total_seconds = 0;
-        g_printf ("%f\n", delta);
-
-        prev_x = event->motion.x;
-        prev_y = event->motion.y;
-        break;
-      case CLUTTER_BUTTON_RELEASE:
-        g_signal_handlers_disconnect_by_func (actor, time_extend_capture, data);
-        break;
-      default:
-        break;
-    }
-}
-
-static gboolean
-total_pressed (ClutterActor *actor,
-               ClutterEvent *event,
-               gpointer      data)
-{
-  g_printf ("total pressed! %p\n");
-  prev_x = event->button.x;
-  prev_y = event->button.y;
-  g_signal_connect (clutter_actor_get_stage (actor),
-                    "captured-event", G_CALLBACK (time_extend_capture),
-                    data);
-  return TRUE;
-}
-
-static gboolean
-remaining_pressed (ClutterActor *actor,
-                   ClutterEvent *event,
-                   gpointer      data)
-{
-  g_printf ("remaining pressed! %p\n");
-  prev_x = event->button.x;
-  prev_y = event->button.y;
-  g_signal_connect (clutter_actor_get_stage (actor),
-                    "captured-event", G_CALLBACK (time_extend_capture),
-                    data);
-  return TRUE;
-}
-
 
 static void
 clutter_renderer_init (PinPointRenderer   *pp_renderer,
@@ -484,6 +451,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                          renderer->commandline,
                          NULL);
 
+  renderer->timer_paused = FALSE;
+  renderer->timer = g_timer_new ();
 
   if (renderer->speaker_mode)
     {
@@ -495,22 +464,61 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                                     "font-name",      "Sans 20px",
                                     "color",          &white,
                                     NULL);
-      renderer->speaker_slide_info = g_object_new (CLUTTER_TYPE_TEXT,
-                                    "x", 10.0,
-                                    "y", 400.0,
-                                    "font-name",      "Sans 20px",
-                                    "color",          &gray,
-                                    NULL);
 
       renderer->speaker_time_remaining = g_object_new (CLUTTER_TYPE_TEXT,
                                     "x",           300.0,
-                                    "y",           340.0,
+                                    "y",           0.0,
                                     "opacity",     NORMAL_OPACITY,
-                                    "font-name",   "Sans 40px",
+                                    "font-name",   "Sans 28px",
                                     "text",        "-3",
                                     "reactive",    TRUE,
                                     "color",       &white,
                                     NULL);
+
+
+      renderer->speaker_buttons_group = clutter_group_new ();
+      renderer->speaker_rehearse = g_object_new (CLUTTER_TYPE_TEXT,
+                                    "x",           0.0,
+                                    "y",           0.0,
+                                    "opacity",     NORMAL_OPACITY,
+                                    "font-name",   "Sans 28px",
+                                    "text",        "rehearse",
+                                    "reactive",    TRUE,
+                                    "color",       &white,
+                                    NULL);
+      renderer->speaker_autoplay = g_object_new (CLUTTER_TYPE_TEXT,
+                                    "x",           140.0,
+                                    "y",           0.0,
+                                    "opacity",     NORMAL_OPACITY,
+                                    "font-name",   "Sans 28px",
+                                    "text",        "autoplay",
+                                    "reactive",    TRUE,
+                                    "color",       &white,
+                                    NULL);
+      renderer->speaker_reset_time = g_object_new (CLUTTER_TYPE_TEXT,
+                                    "x",           280.0,
+                                    "y",           0.0,
+                                    "opacity",     NORMAL_OPACITY,
+                                    "font-name",   "Sans 28px",
+                                    "text",        "reset time",
+                                    "reactive",    TRUE,
+                                    "color",       &white,
+                                    NULL);
+      renderer->speaker_pause_time = g_object_new (CLUTTER_TYPE_TEXT,
+                                    "x",           440.0,
+                                    "y",           0.0,
+                                    "opacity",     NORMAL_OPACITY,
+                                    "font-name",   "Sans 28px",
+                                    "text",        "pause time",
+                                    "reactive",    TRUE,
+                                    "color",       &white,
+                                    NULL);
+
+      opacity_hover(renderer->speaker_rehearse);
+      opacity_hover(renderer->speaker_autoplay);
+      opacity_hover(renderer->speaker_pause_time);
+      opacity_hover(renderer->speaker_reset_time);
+
 
       g_signal_connect (renderer->speaker_time_remaining, "button-press-event",
                         G_CALLBACK (elapsed_pressed), renderer);
@@ -519,9 +527,17 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
       renderer->timer_paused = FALSE;
       renderer->timer = g_timer_new ();
 
+
+      renderer->speaker_slide_prog_bg = clutter_rectangle_new_with_color (&c_prog_bg);
+      renderer->speaker_slide_prog_time = clutter_rectangle_new_with_color (&c_prog_time);
+
       renderer->speaker_prog_bg = clutter_rectangle_new_with_color (&c_prog_bg);
       renderer->speaker_prog_time = clutter_rectangle_new_with_color (&c_prog_time);
       renderer->speaker_prog_slide = clutter_rectangle_new_with_color (&c_prog_slide);
+      renderer->speaker_slide_prog_warning = clutter_rectangle_new_with_color (&red);
+      renderer->speaker_prog_warning = clutter_rectangle_new_with_color (&red);
+
+
 
       clutter_stage_set_color (CLUTTER_STAGE (renderer->speaker_screen), &black);
       clutter_stage_set_color (CLUTTER_STAGE (renderer->speaker_screen), &black);
@@ -530,15 +546,32 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 
       clutter_container_add (CLUTTER_CONTAINER (renderer->speaker_screen),
                              renderer->speaker_notes,
-                             renderer->speaker_slide_info,
                              renderer->speaker_prog_bg,
                              renderer->speaker_prog_time,
+                             renderer->speaker_prog_warning,
                              renderer->speaker_prog_slide,
+
+                             renderer->speaker_slide_prog_bg,
+                             renderer->speaker_slide_prog_time,
+                             renderer->speaker_slide_prog_warning,
+
+                             renderer->speaker_buttons_group,
 
                              renderer->speaker_time_remaining,
 
                              renderer->speaker_clone,
                              NULL);
+
+      clutter_container_add (CLUTTER_CONTAINER (renderer->speaker_buttons_group),
+                             renderer->speaker_rehearse,
+                             renderer->speaker_autoplay,
+                             renderer->speaker_reset_time,
+                             renderer->speaker_pause_time,
+                             NULL);
+
+
+      clutter_actor_set_opacity (renderer->speaker_slide_prog_warning, 0);
+      clutter_actor_set_opacity (renderer->speaker_prog_warning, 0);
 
       /* offscreen creation for actor on different stage not supported */
       //renderer->speaker_clone = clutter_texture_new_from_actor (renderer->root);
@@ -560,6 +593,13 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                     G_CALLBACK (key_pressed), renderer);
   g_signal_connect (stage, "notify::width",
                     G_CALLBACK (stage_resized), renderer);
+
+  if (renderer->speaker_screen)
+    {
+      g_signal_connect (renderer->speaker_screen, "notify::width",
+                    G_CALLBACK (stage_resized), renderer);
+    }
+
   g_signal_connect (stage, "notify::height",
                     G_CALLBACK (stage_resized), renderer);
   g_signal_connect (stage, "motion-event",
@@ -601,8 +641,7 @@ clutter_renderer_run (PinPointRenderer *pp_renderer)
   /* the presentaiton is not parsed at first initialization,.. */
   renderer->total_seconds = point_defaults->duration * 60;
 
-  if (renderer->speaker_mode)
-    g_timeout_add (250, (GSourceFunc)update_speaker_screen, renderer);
+  g_timeout_add (100, (GSourceFunc)update_speaker_screen, renderer);
   clutter_main ();
 }
 
@@ -787,6 +826,29 @@ clutter_renderer_free_data (PinPointRenderer *renderer,
 }
 
 
+static void
+next_slide (ClutterRenderer *renderer)
+{
+  if (pp_slidep && pp_slidep->next)
+    {
+      leave_slide (renderer, FALSE);
+      pp_slidep = pp_slidep->next;
+      show_slide (renderer, FALSE);
+    }
+}
+
+
+static void
+prev_slide (ClutterRenderer *renderer)
+{
+  if (pp_slidep && pp_slidep->prev)
+    {
+      leave_slide (renderer, TRUE);
+      pp_slidep = pp_slidep->prev;
+      show_slide (renderer, TRUE);
+    }
+}
+
 
 static gboolean
 key_pressed (ClutterActor    *actor,
@@ -798,32 +860,15 @@ key_pressed (ClutterActor    *actor,
     {
       case CLUTTER_Left:
       case CLUTTER_Up:
-        if (pp_slidep && pp_slidep->prev)
-          {
-            leave_slide (renderer, TRUE);
-            pp_slidep = pp_slidep->prev;
-            show_slide (renderer, TRUE);
-          }
-        break;
       case CLUTTER_BackSpace:
       case CLUTTER_Prior:
-        if (pp_slidep && pp_slidep->prev)
-          {
-            leave_slide (renderer, TRUE);
-            pp_slidep = pp_slidep->prev;
-            show_slide (renderer, TRUE);
-          }
+        prev_slide (renderer);
         break;
       case CLUTTER_Right:
       case CLUTTER_space:
       case CLUTTER_Next:
       case CLUTTER_Down:
-        if (pp_slidep && pp_slidep->next)
-          {
-            leave_slide (renderer, FALSE);
-            pp_slidep = pp_slidep->next;
-            show_slide (renderer, FALSE);
-          }
+        next_slide (renderer);
         break;
       case CLUTTER_Escape:
         clutter_main_quit ();
@@ -838,6 +883,12 @@ key_pressed (ClutterActor    *actor,
       case CLUTTER_Tab:
         activate_commandline (renderer);
         break;
+      case CLUTTER_a:
+        if (renderer->autoplay)
+          renderer->autoplay = FALSE;
+        else
+          renderer->autoplay = TRUE;
+        break;
     }
   return TRUE;
 }
@@ -848,6 +899,10 @@ static void leave_slide (ClutterRenderer *renderer,
 {
   PinPointPoint *point = pp_slidep->data;
   ClutterPointData *data = point->data;
+
+  if (pp_rehearse)
+    point->duration += g_timer_elapsed (renderer->timer, NULL) -
+                                        renderer->slide_start_time;
 
   if (!point->transition)
     {
@@ -1006,12 +1061,84 @@ static void update_commandline_shading (ClutterRenderer *renderer)
        NULL);
 }
 
+static gfloat total_time (GList *start)
+{
+  GList *iter;
+  gfloat total = 0;
+  if (!start)
+    start = pp_slides;
+  for (iter = start; iter; iter = iter->next)
+    {
+      PinPointPoint *point = iter->data;
+      total +=
+        point->duration != 0.0 ? point->duration : 2.0;
+    }
+  return total;
+}
+
+static gfloat slide_time (ClutterRenderer *renderer,
+                          GList *slide)
+{
+  PinPointPoint *point = slide->data;
+  float time = (point->duration != 0.0 ? point->duration : 2.0) /
+                     total_time (slide);
+  float remaining_time = renderer->total_seconds -
+                           g_timer_elapsed (renderer->timer, NULL);
+  time *= remaining_time;
+  return time;
+}
+
 static gboolean update_speaker_screen (ClutterRenderer *renderer)
 {
-  PinPointPoint    *point;
+  PinPointPoint *point;
   int n_slides;
   int slide_no;
   point = pp_slidep->data;
+  static float current_slide_time = 0.0;
+  static float current_slide_duration = 0.0;
+  static GList *current_slide = NULL;
+
+  //if (renderer->autoplay)
+    {
+      static float current_slide_prev = 0.0;
+      float diff = g_timer_elapsed (renderer->timer, NULL) - current_slide_prev;
+
+      if (current_slide != pp_slidep)
+        {
+          current_slide_time = 0;
+          current_slide = pp_slidep;
+          current_slide_duration = slide_time (renderer, pp_slidep);
+        }
+
+      current_slide_time += diff;
+      if (current_slide_time >= current_slide_duration)
+        {
+          if (renderer->autoplay)
+            {
+              current_slide_time = 0;
+              next_slide (renderer);
+            }
+          else
+            {
+              clutter_actor_animate (renderer->speaker_slide_prog_warning,
+                                     CLUTTER_LINEAR, 500,
+                                     "opacity", 128,
+                                     NULL);
+            }
+        }
+      else
+        {
+          clutter_actor_animate (renderer->speaker_slide_prog_warning,
+                                 CLUTTER_LINEAR, 50,
+                                 "opacity", 0,
+                                 NULL);
+        }
+
+      current_slide_prev = g_timer_elapsed (renderer->timer, NULL);
+    }
+
+  if (!pp_speakermode)
+    return TRUE;
 
   if (point->speaker_notes)
     clutter_text_set_text (CLUTTER_TEXT (renderer->speaker_notes),
@@ -1029,37 +1156,74 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
     slide_no = i+1;
     n_slides = g_list_length (pp_slides);
 
-    //g_string_printf (str, "%d / %d\n", i+1, g_list_length (pp_slides));
-    clutter_text_set_text (CLUTTER_TEXT (renderer->speaker_slide_info),
-                           str->str);
+
+
 
     {
       int time = renderer->total_seconds -
                       g_timer_elapsed (renderer->timer, NULL);
-      g_string_printf (str, "%im%is\n", time / 60, time % 60);
-      clutter_text_set_text (CLUTTER_TEXT (renderer->speaker_time_remaining),
-                             str->str);
+      if (time <= -60)
+        g_string_printf (str, "%imin", time/60);
+      else if (time <= 60)
+        g_string_printf (str, "%is", time);
+      else
+        g_string_printf (str, "%i%smin", time / 60, (time % 60 > 30) ? "½":"");
+        clutter_text_set_text (CLUTTER_TEXT (renderer->speaker_time_remaining),
+                               str->str);
+
+
+      if (time < 0)
+        clutter_actor_animate (renderer->speaker_prog_warning,
+                               CLUTTER_LINEAR, 500,
+                               "opacity", 128,
+                               NULL);
+      else
+        clutter_actor_animate (renderer->speaker_prog_warning,
+                               CLUTTER_LINEAR, 50,
+                               "opacity", 0,
+                               NULL);
+
     }
 
-    g_string_assign (str, "");
-
+    g_string_assign (str, ""); 
     g_string_free (str, TRUE);
   }
 
   {
     float height = 40;
-    float nw = clutter_actor_get_width (renderer->speaker_screen);
+    float nh = clutter_actor_get_height (renderer->speaker_screen);
+    float nw = clutter_actor_get_width (renderer->speaker_screen) + 1;
     float y = clutter_actor_get_height (renderer->speaker_screen) - height;
     float elapsed_part = g_timer_elapsed (renderer->timer, NULL) / renderer->total_seconds;
+
+    clutter_actor_set_height (renderer->speaker_slide_prog_bg, height);
+    clutter_actor_set_height (renderer->speaker_slide_prog_time, height);
 
     clutter_actor_set_height (renderer->speaker_prog_bg, height);
     clutter_actor_set_height (renderer->speaker_prog_slide, height);
     clutter_actor_set_height (renderer->speaker_prog_time, height);
+    clutter_actor_set_size   (renderer->speaker_prog_warning,
+                              nw, height);
+    clutter_actor_set_size   (renderer->speaker_slide_prog_warning,
+                              nw, height);
     clutter_actor_set_y (renderer->speaker_prog_bg, y);
+    clutter_actor_set_y (renderer->speaker_prog_warning, y);
     clutter_actor_set_y (renderer->speaker_prog_slide, y);
     clutter_actor_set_y (renderer->speaker_prog_time, y);
 
+    clutter_actor_set_y (renderer->speaker_slide_prog_bg, y - height);
+    clutter_actor_set_y (renderer->speaker_slide_prog_time, y - height);
+    clutter_actor_set_y (renderer->speaker_slide_prog_warning, y - height);
+
+    clutter_actor_set_y (renderer->speaker_buttons_group, y - height * 2);
+
     clutter_actor_set_width (renderer->speaker_prog_bg, nw);
+    clutter_actor_set_width (renderer->speaker_slide_prog_bg, nw);
+
+
+    clutter_actor_set_position (renderer->speaker_time_remaining,
+       nw - clutter_actor_get_width (renderer->speaker_time_remaining),
+       nh - clutter_actor_get_height (renderer->speaker_time_remaining));
 
 
     clutter_actor_set_x (renderer->speaker_prog_slide, nw * (1.0 * (slide_no-1) / n_slides));
@@ -1068,8 +1232,13 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
     clutter_actor_set_x (renderer->speaker_prog_time, nw * elapsed_part);
 
     clutter_actor_set_width (renderer->speaker_prog_time, nw * (1.0-elapsed_part));
-    clutter_actor_set_height (renderer->speaker_prog_slide, height);
-    clutter_actor_set_height (renderer->speaker_prog_time, height);
+
+
+    elapsed_part = current_slide_time / current_slide_duration;
+    clutter_actor_set_x (renderer->speaker_slide_prog_time, nw * elapsed_part);
+
+    clutter_actor_set_width (renderer->speaker_slide_prog_time, nw * (1.0-elapsed_part));
+
   }
 
 
@@ -1097,6 +1266,9 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
 
   if (!pp_slidep)
     return;
+
+  if (pp_rehearse)
+    renderer->slide_start_time = g_timer_elapsed (renderer->timer, NULL);
 
   point = pp_slidep->data;
   data = point->data;
@@ -1420,13 +1592,13 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
     }
 }
 
-
 static void
 stage_resized (ClutterActor    *actor,
                GParamSpec      *pspec,
                ClutterRenderer *renderer)
 {
   show_slide (renderer, FALSE); /* redisplay the current slide */
+  update_speaker_screen (renderer);
 }
 
 static guint reload_tag = 0;
@@ -1478,3 +1650,11 @@ PinPointRenderer *pp_clutter_renderer (void)
 {
   return (void*)&clutter_renderer_vtable;
 }
+
+/*
+  - only make the time run after having gone to slide #2 ? .. uncertain
+  - have the user start the timer by doing an ignored "next slide"
+  - scale the slide shown in time progress based on slide "size" in duration?..
+    ... doing so would make the position in progress more closely resemble
+    wall clock time for presentation.
+*/
