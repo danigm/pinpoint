@@ -112,6 +112,33 @@ PinPointRenderer *pp_cairo_renderer   (void);
 #endif
 static char * pp_serialize (void);
 
+void pp_rehearse_init (void)
+{
+  GList *iter;
+  for (iter = pp_slides; iter; iter=iter->next)
+    {
+      PinPointPoint *point = iter->data;
+        point->duration = 0.0;
+    }
+}
+
+static char *pinfile = NULL;
+
+void pp_rehearse_save (void)
+{
+  GError *error = NULL;
+  char *content = pp_serialize ();
+  if (!g_file_set_contents (pinfile, content, -1, &error))
+    {
+      printf ("Failed to save to %s %s\n", pinfile, error->message);
+    }
+  else
+    {
+      printf ("saved\n");
+    }
+  g_free (content);
+}
+
 int
 main (int    argc,
       char **argv)
@@ -134,7 +161,9 @@ main (int    argc,
       return EXIT_FAILURE;
     }
 
-  if (!argv[1])
+  pinfile = argv[1];
+
+  if (!pinfile)
     {
       g_print ("usage: %s [options] <presentation>\n", argv[0]);
       text = g_strdup ("[no-markup][transition=sheet][red]\n"
@@ -143,9 +172,9 @@ main (int    argc,
     }
   else
     {
-      if (!g_file_get_contents (argv[1], &text, NULL, NULL))
+      if (!g_file_get_contents (pinfile, &text, NULL, NULL))
         {
-          g_print ("failed to load presentation from %s\n", argv[1]);
+          g_print ("failed to load presentation from %s\n", pinfile);
           return -1;
         }
     }
@@ -172,16 +201,17 @@ main (int    argc,
 #endif
     }
 
-  if (!argv[1])
+  if (!pinfile)
     pp_rehearse = FALSE;
 
-  renderer->init (renderer, argv[1]);
+  renderer->init (renderer, pinfile);
   pp_parse_slides (renderer, text);
   g_free (text);
 
   if (pp_rehearse)
     {
-      printf ("Running in rehearsal mode, press ctrl+C to abort without saving timings back to %s\n", argv[1]);
+      pp_rehearse_init ();
+      printf ("Running in rehearsal mode, press ctrl+C to abort without saving timings back to %s\n", pinfile);
     }
 
   renderer->run (renderer);
@@ -189,15 +219,7 @@ main (int    argc,
   if (renderer->source)
     g_free (renderer->source);
   if (pp_rehearse)
-    {
-      GError *error = NULL;
-      char *content = pp_serialize ();
-      if (!g_file_set_contents (argv[1], content, -1, &error))
-        {
-          printf ("Failed to save to %s %s\n", argv[1], error->message);
-        }
-      g_free (content);
-    }
+    pp_rehearse_save ();
 
   g_list_free (pp_slides);
 
@@ -769,8 +791,6 @@ pp_parse_slides (PinPointRenderer *renderer,
                     g_string_assign (notes_str, "");
 
                     pp_slides = g_list_append (pp_slides, point);
-                    if (pp_rehearse)
-                      point->duration = 0.0;
                     point = next_point;
                   }
               }

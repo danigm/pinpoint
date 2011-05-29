@@ -2,19 +2,18 @@
 
 [bg.jpg]
 [font=Sans 50px]
-[duration=3]
-
--- [duration=4.683119]
+[duration=3.000000]
+-- [duration=1.224066]
 Welcome to pinpoint
 
--- [duration=3.776958]
+-- [duration=2.811049]
 A tool for making excellent presentations
 
--- [bowls.jpg] [duration=2.539292]
+-- [bowls.jpg] [duration=2.396589]
 It has a simple text source
 # The source can include witty comment lines
 
--- [font=monospace 18px] [shading-opacity=1.000000] [duration=7.709680]
+-- [font=monospace 18px] [shading-opacity=1.000000] [duration=2.173404]
 The current presentation thus far:
  #!/usr/bin/env pinpoint
  [font=Sans 50px]
@@ -33,7 +32,7 @@ The current presentation thus far:
  - [font=monospace 18px] [shading-opacity=1.0]
  The current presentation thus far:
 
--- [text-align=center] [duration=7.365783]
+-- [text-align=center] [duration=1.792367]
 You start by writing down the core concepts that you will be talking about. Then sort and format
 them as a pinpoint presentation in a text editor of your choice. 
 
@@ -44,97 +43,97 @@ Pinpoint reloads the presentation when it changes on disk, very useful when you'
 so keep both pinpoint and your text editor open. And remember, the less text you have, the happier
 your audience will be ;-)
 
--- [duration=5.208730]
+-- [duration=1.663685]
 Let's use some of the more 
 esoteric features of pinpoint
 
--- [bowls.jpg] [text-align=center] [duration=2.027793]
+-- [bowls.jpg] [text-align=center] [duration=1.430618]
 - [filename.jpg]
 set a custom background for an individual slide
 
--- [bunny.ogv] [fill] [duration=2.746118]
+-- [bunny.ogv] [fill] [duration=1.465077]
 You can put <b>anything</b> in the background
 
--- [linus.jpg] [fill] [bottom-left] [duration=2.707251]
+-- [linus.jpg] [fill] [bottom-left] [duration=1.324098]
 But, slides with cat pictures are best
 
--- [text-align=right] [top-right] [duration=2.866165]
+-- [text-align=right] [top-right] [duration=1.396734]
 position text in the
 [top-right]
 
--- [right] [duration=0.900697]
+-- [right] [duration=1.222382]
 [right]
 
--- [bottom-right] [duration=0.769096]
+-- [bottom-right] [duration=1.264147]
 [bottom-right]
 
--- [bottom] [duration=0.886113]
+-- [bottom] [duration=1.264479]
 [bottom]
 
--- [bottom-left] [duration=0.819249]
+-- [bottom-left] [duration=1.164848]
 [bottom-left]
 
--- [left] [duration=0.869433]
+-- [left] [duration=1.364550]
 [left]
 
--- [top-left] [duration=0.869504]
+-- [top-left] [duration=1.240191]
 [top-left]
 
--- [top] [duration=0.869362]
+-- [top] [duration=1.297619]
 [top]
 
--- [text-align=center] [duration=0.953079]
+-- [text-align=center] [duration=1.005195]
 and even in the
 [center]
 (which is the default)
 
--- [white] [bottom] [font=Monospace 100px] [text-color=black] [shading-opacity=0.000000] [duration=2.218380]
+-- [white] [bottom] [font=Monospace 100px] [text-color=black] [shading-opacity=0.000000] [duration=0.266029]
 Make text big!
 [font=Monospace 100px]
 [white][text-color=black]
 [shading-opacity=0.0][bottom]
 
--- [duration=1.787317]
+-- [duration=0.266103]
 <s>use</s> <b>pango</b> <i
 ><span foreground='red'>m<u
 >ar</u>k<sup>up</sup></span></i> for style
 
--- [duration=3.561908]
+-- [duration=0.232756]
 [no-markup]
 <s>don't use</s> <b>pango</b> <i
 ><span foreground='red'>m<u
 >ar</u>k<sup>up</sup></span></i>
 
--- [bowls.jpg] [transition=page-curl-both] [duration=1.484900]
+-- [bowls.jpg] [transition=page-curl-both] [duration=0.249426]
 need bullets?
  ❥ use the power of unicode
 • ✽ ✩ ✔ ☃ ◦
 
--- [transition=text-slide-up] [duration=1.587787]
+-- [transition=text-slide-up] [duration=0.282905]
 $ pinpoint presentation.txt -o output.pdf
 Export to PDF. Handy.
 
--- [fill] [duration=2.060135]
+-- [fill] [duration=0.271180]
 [fill]
 Fill the slide with your background
 (the default is [fit])
 
--- [transition=swing] [duration=1.915374]
+-- [transition=swing] [duration=0.278247]
 Keybindings:
 
--- [transition=sheet] [duration=1.212597]
+-- [transition=sheet] [duration=0.448654]
 right, down or space - next slide
 
--- [transition=slide-left] [duration=1.196703]
+-- [transition=slide-left] [duration=0.299550]
 left or up - previous slide
 
--- [transition=slide-up] [duration=1.324502]
+-- [transition=slide-up] [duration=0.299543]
 F11 - toggle fullscreen
 
--- [transition=text-slide-down] [duration=1.309028]
+-- [transition=text-slide-down] [duration=0.382787]
 Escape - quit pinpoint
 
--- [fill] [transition=slide-in-left] [command=killall xeyes ; xeyes] [duration=1.308753]
+-- [fill] [transition=slide-in-left] [command=killall xeyes ; xeyes] [duration=0.715592]
 Enter - Run command
 Tab - Edit command
 [command=killall xeyes ; xeyes]
@@ -143,7 +142,7 @@ N.B. run pinpoint with the -m option
 and hidden or auto-hiding panels, to
 allow window management in fullscreen.
 
--- [linus.jpg] [fill] [bottom-right] [duration=1.236172]
+-- [linus.jpg] [fill] [bottom-right] [duration=0.499109]
 That's pretty much everything. 
 Told you it was simple.
 

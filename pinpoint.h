@@ -121,6 +121,9 @@ pp_get_padding (float  stage_width,
                 float  stage_height,
                 float *padding);
 
+void pp_rehearse_init (void);
+void pp_rehearse_save (void);
+
 void
 pp_get_background_position_scale (PinPointPoint *point,
                                   float          stage_width,
