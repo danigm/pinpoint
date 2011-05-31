@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+
 #include <clutter/clutter.h>
 
 typedef struct _PinPointPoint    PinPointPoint;
@@ -92,6 +93,8 @@ struct _PinPointPoint
                                         presentation, other slides have a representation
                                         of their portion of the presentation  */
 
+  gfloat             new_duration;  /* new duration,. used during reharsal */
+
   char              *speaker_notes; /* speaker comments for the slide */
 
   const char        *shading_color;
@@ -122,7 +125,7 @@ pp_get_padding (float  stage_width,
                 float *padding);
 
 void pp_rehearse_init (void);
-void pp_rehearse_save (void);
+void pp_rehearse_done (void);
 
 void
 pp_get_background_position_scale (PinPointPoint *point,

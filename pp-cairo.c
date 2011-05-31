@@ -52,6 +52,8 @@ typedef struct _CairoRenderer
                                    when using it in several slides */
   cairo_surface_t *surface;
   cairo_t         *ctx;
+  double           width;
+  double           height;
 } CairoRenderer;
 
 typedef struct
@@ -76,8 +78,10 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
 
   /* A4, landscape */
+  renderer->width = A4_LS_WIDTH;
+  renderer->height = A4_LS_HEIGHT;
   renderer->surface = cairo_pdf_surface_create (pp_output_filename,
-                                                A4_LS_WIDTH, A4_LS_HEIGHT);
+                                                renderer->width, renderer->height);
   renderer->path = g_strdup (pinpoint_file);
 
   renderer->ctx = cairo_create (renderer->surface);
@@ -87,6 +91,11 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
                                           NULL,
                                           g_object_unref);
 }
+
+static void
+cairo_renderer_cr_render(void    *pp_renderer,
+                         cairo_t *cr);
+
 
 /* This function is adapted from Gtk's gdk_cairo_set_source_pixbuf() you can
  * find in gdk/gdkcairo.c.
@@ -282,7 +291,16 @@ _cairo_render_background (CairoRenderer *renderer,
                           PinPointPoint *point)
 {
   char       *full_path = NULL;
-  const char *file = point->bg;
+  const char *file;
+
+  if (point == NULL)
+    {
+      cairo_set_source_rgb (renderer->ctx, 0,0,0);
+      cairo_paint (renderer->ctx);
+      return;
+    }
+
+  file = point->bg;
 
   if (point->bg_type != PP_BG_COLOR && renderer->path && file)
     {
@@ -335,7 +353,7 @@ _cairo_render_background (CairoRenderer *renderer,
         bg_height = cairo_image_surface_get_height (surface);
 
         pp_get_background_position_scale (point,
-                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          renderer->width, renderer->height,
                                           bg_width, bg_height,
                                           &bg_x, &bg_y,
                                           &bg_scale_x, &bg_scale_y);
@@ -367,7 +385,7 @@ _cairo_render_background (CairoRenderer *renderer,
         bg_height = cairo_image_surface_get_height (surface);
 
         pp_get_background_position_scale (point,
-                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          renderer->width, A4_LS_HEIGHT,
                                           bg_width, bg_height,
                                           &bg_x, &bg_y,
                                           &bg_scale_x, &bg_scale_y);
@@ -394,7 +412,7 @@ _cairo_render_background (CairoRenderer *renderer,
         rsvg_handle_get_dimensions (svg, &dim);
 
         pp_get_background_position_scale (point,
-                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          renderer->width, renderer->height,
                                           dim.width, dim.height,
                                           &bg_x, &bg_y,
                                           &bg_scale_x, &bg_scale_y);
@@ -427,6 +445,8 @@ _cairo_render_text (CairoRenderer *renderer,
 
   float text_x,    text_y,    text_width,    text_height,   text_scale;
   float shading_x, shading_y, shading_width, shading_height;
+  if (point == NULL)
+    return;
 
   layout = pango_cairo_create_layout (renderer->ctx);
   desc = pango_font_description_from_string (point->font);
@@ -444,12 +464,12 @@ _cairo_render_text (CairoRenderer *renderer,
     goto out;
 
   pp_get_text_position_scale (point,
-                              A4_LS_WIDTH, A4_LS_HEIGHT,
+                              renderer->width, renderer->height,
                               text_width, text_height,
                               &text_x, &text_y,
                               &text_scale);
 
-  pp_get_shading_position_size (A4_LS_HEIGHT, A4_LS_WIDTH,
+  pp_get_shading_position_size (renderer->height, renderer->width, /* XXX: is this right order?? */
                                 text_x, text_y,
                                 text_width, text_height,
                                 text_scale,
@@ -484,9 +504,9 @@ out:
   g_object_unref (layout);
 }
 
-static void
-_cairo_render_page (CairoRenderer *renderer,
-                    PinPointPoint *point)
+void
+cairo_renderer_render_page (CairoRenderer *renderer,
+                            PinPointPoint *point)
 {
   _cairo_render_background (renderer, point);
   _cairo_render_text (renderer, point);
@@ -500,7 +520,7 @@ cairo_renderer_run (PinPointRenderer *pp_renderer)
   GList         *cur;
 
   for (cur = pp_slides; cur; cur = g_list_next (cur))
-    _cairo_render_page (renderer, cur->data);
+    cairo_renderer_render_page (renderer, cur->data);
 }
 
 static void
@@ -509,11 +529,14 @@ cairo_renderer_finalize (PinPointRenderer *pp_renderer)
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
 
   g_free (renderer->path);
-  cairo_surface_destroy (renderer->surface);
+  if (renderer->surface)
+    cairo_surface_destroy (renderer->surface);
   g_hash_table_unref (renderer->surfaces);
   g_hash_table_unref (renderer->svgs);
-  cairo_destroy (renderer->ctx);
+  if (renderer->ctx)
+    cairo_destroy (renderer->ctx);
 }
+
 
 static gboolean
 cairo_renderer_make_point (PinPointRenderer *pp_renderer,
@@ -525,10 +548,39 @@ cairo_renderer_make_point (PinPointRenderer *pp_renderer,
     {
       ClutterColor color;
 
-      ret = clutter_color_from_string (&color, point->bg);
+      ret = clutter_color_from_string (&color, point->bg); /* this roughly checks that the color is valid? */
     }
 
   return ret;
+}
+
+void
+cairo_renderer_unset_cr (PinPointRenderer *pp_renderer)
+{
+  CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
+  renderer->ctx = NULL;
+}
+
+void
+cairo_renderer_set_cr (PinPointRenderer *pp_renderer,
+                       cairo_t          *ctx,
+                       float             width,
+                       float             height)
+{
+  CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
+  if (renderer->ctx)
+    {
+      if (renderer->surface)
+        {
+          cairo_surface_destroy (renderer->surface);
+          renderer->surface = NULL;
+        }
+      cairo_destroy (renderer->ctx);
+      renderer->ctx = NULL;
+    }
+  renderer->ctx = ctx;
+  renderer->width = width;
+  renderer->height = height;
 }
 
 static void *

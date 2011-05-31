@@ -118,13 +118,14 @@ void pp_rehearse_init (void)
   for (iter = pp_slides; iter; iter=iter->next)
     {
       PinPointPoint *point = iter->data;
-        point->duration = 0.0;
+      point->new_duration = 0.0;
     }
 }
 
+
 static char *pinfile = NULL;
 
-void pp_rehearse_save (void)
+static void pp_rehearse_save (void)
 {
   GError *error = NULL;
   char *content = pp_serialize ();
@@ -134,9 +135,21 @@ void pp_rehearse_save (void)
     }
   else
     {
-      printf ("saved\n");
+      printf ("saved to %s\n", pinfile);
     }
   g_free (content);
+}
+
+
+void pp_rehearse_done (void)
+{
+  GList *iter;
+  for (iter = pp_slides; iter; iter=iter->next)
+    {
+      PinPointPoint *point = iter->data;
+      point->duration = point->new_duration;
+    }
+  pp_rehearse_save ();
 }
 
 int
@@ -218,8 +231,10 @@ main (int    argc,
   renderer->finalize (renderer);
   if (renderer->source)
     g_free (renderer->source);
+#if 0
   if (pp_rehearse)
     pp_rehearse_save ();
+#endif
 
   g_list_free (pp_slides);
 
@@ -510,7 +525,9 @@ str_has_video_suffix (const char *string)
 
   for (ext = video_extensions; *ext; ext ++)
     if (g_str_has_suffix (string, *ext))
-      return TRUE;
+      {
+        return TRUE;
+      }
   return FALSE;
 }
 
@@ -690,7 +707,7 @@ pp_parse_slides (PinPointRenderer *renderer,
                 start_of_line = FALSE;
             }
         }
-      slideno--;
+      slideno-=2;
       g_free (renderer->source);
     }
   renderer->source = g_strdup (slide_src);
