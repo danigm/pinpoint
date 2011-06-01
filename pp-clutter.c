@@ -523,6 +523,7 @@ start (ClutterActor *actor,
     {
       pp_rehearse = FALSE;
     }
+  pp_rehearse_init (); /* zeroes out the new-time */
   show_slide (renderer, TRUE);
   renderer->reset = TRUE;
   return TRUE;
@@ -1112,9 +1113,8 @@ static void leave_slide (ClutterRenderer *renderer,
   PinPointPoint *point = pp_slidep->data;
   ClutterPointData *data = point->data;
 
-  if (pp_rehearse)
-    point->new_duration += g_timer_elapsed (renderer->timer, NULL) -
-                                            renderer->slide_start_time;
+  point->new_duration += g_timer_elapsed (renderer->timer, NULL) -
+                                          renderer->slide_start_time;
 
   if (!point->transition)
     {
@@ -1275,7 +1275,23 @@ static void update_commandline_shading (ClutterRenderer *renderer)
 static gfloat point_time (ClutterRenderer *renderer,
                           PinPointPoint   *point)
 {
-  float time = point->duration != 0.0 ? point->duration : 2.0;
+  GList *iter;
+  float time;
+  gboolean after_current = FALSE;
+
+  for (iter = pp_slides; iter && iter->data != point; iter = iter->next)
+    {
+      if (iter == pp_slidep)
+        after_current = TRUE;
+    }
+
+  time = point->duration != 0.0 ? point->duration : 2.0;
+  if (!after_current)
+    if (point->new_duration != 0.0)
+      time = point->new_duration;
+  /* if before current point, use new time.. if at or after current point
+     use histroic time
+   */
 #if 0
   if (pp_rehearse && pp_slidep && pp_slidep->data == point)
     {
