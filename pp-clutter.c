@@ -685,18 +685,26 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
   clutter_stage_set_color (CLUTTER_STAGE (renderer->speaker_screen), &black);
   clutter_stage_set_user_resizable (CLUTTER_STAGE (renderer->speaker_screen), TRUE);
 
+  renderer->speaker_prev = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
+  renderer->speaker_current = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
+  renderer->speaker_next = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
   clutter_container_add (CLUTTER_CONTAINER (renderer->speaker_screen),
+
+                         renderer->speaker_prev,
+                         renderer->speaker_current,
+                         renderer->speaker_next,
                          renderer->speaker_notes,
                          renderer->speaker_prog_bg,
                          renderer->speaker_slide_prog_warning,
                          renderer->speaker_prog_time,
+
+
                          renderer->speaker_prog_slide,
+
+
                          renderer->speaker_buttons_group,
                          renderer->speaker_time_remaining,
-                         renderer->speaker_prev,
-                         renderer->speaker_next,
-                         renderer->speaker_current,
                          NULL);
 
 
@@ -704,9 +712,6 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
   clutter_actor_set_opacity (renderer->speaker_slide_prog_warning, 0);
 
 
-  renderer->speaker_prev = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
-  renderer->speaker_current = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
-  renderer->speaker_next = clutter_cairo_texture_new (PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
   opacity_hover(renderer->speaker_prev);
   opacity_hover(renderer->speaker_next);
@@ -716,11 +721,6 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
   g_signal_connect (renderer->speaker_next, "button-press-event",
                     G_CALLBACK (go_next), renderer);
 
-  clutter_container_add (CLUTTER_CONTAINER (renderer->speaker_screen),
-                         renderer->speaker_prev,
-                         renderer->speaker_current,
-                         renderer->speaker_next,
-                         NULL);
 }
 
 static void
@@ -1430,7 +1430,7 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
     for (iter = pp_slides, i=0; iter && iter != pp_slidep;
          iter = iter->next, i++);
 
-    slide_no = i+1;
+    slide_no = i + 1;
     n_slides = g_list_length (pp_slides);
 
     {
@@ -1490,7 +1490,8 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
                               nw, nh);
     clutter_actor_set_y (renderer->speaker_slide_prog_warning, 0);*/
 
-    clutter_actor_set_y (renderer->speaker_buttons_group, y - height);
+    clutter_actor_set_x (renderer->speaker_buttons_group, nw * 0.4);
+    clutter_actor_set_y (renderer->speaker_buttons_group, 5);
 
     clutter_actor_set_width (renderer->speaker_prog_bg, nw);
 
@@ -1514,10 +1515,10 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
 
   {
     float scale;
-    scale = nw / clutter_actor_get_width (renderer->speaker_next) * 0.4;
-    clutter_actor_set_scale (renderer->speaker_prev, scale * 0.75, scale * 0.75);
+    scale = nh / clutter_actor_get_height (renderer->speaker_next) * 0.4;
+    clutter_actor_set_scale (renderer->speaker_prev, scale, scale);
     clutter_actor_set_scale (renderer->speaker_current, scale, scale);
-    clutter_actor_set_scale (renderer->speaker_next, scale * 0.75, scale * 0.75);
+    clutter_actor_set_scale (renderer->speaker_next, scale, scale);
   }
 
   {
@@ -1571,13 +1572,18 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
 
   clutter_actor_set_position (renderer->speaker_prev,
                               nw * 0.0,
-                              nh * 0.4);
+                              nh * -0.1);
   clutter_actor_set_position (renderer->speaker_current,
-                              nw * 0.3,
+                              nw * 0.0,
                               nh * 0.3);
   clutter_actor_set_position (renderer->speaker_next,
-                              nw * 0.7,
-                              nh * 0.4);
+                              nw * 0.0,
+                              nh * 0.7);
+  clutter_actor_set_position (renderer->speaker_notes,
+                              nw * 0.46,
+                              nh * 0.35);
+  clutter_actor_set_width    (renderer->speaker_notes,
+                              nw * 0.5);
   return TRUE;
 }
 
@@ -1972,8 +1978,3 @@ PinPointRenderer *pp_clutter_renderer (void)
 {
   return (void*)&clutter_renderer_vtable;
 }
-
-/*
-   make moving the mouse to some location (as well as tapping in it) cause the
-   previews to re-arrange themselves in a grid.
-*/

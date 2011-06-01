@@ -707,7 +707,7 @@ pp_parse_slides (PinPointRenderer *renderer,
                 start_of_line = FALSE;
             }
         }
-      slideno-=2;
+      slideno-=1;
       g_free (renderer->source);
     }
   renderer->source = g_strdup (slide_src);
