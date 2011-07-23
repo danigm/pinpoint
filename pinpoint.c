@@ -74,6 +74,10 @@ static PinPointPoint pin_default_point = {
   .transition = NULL,
 
   .command = NULL,
+
+  .camera_framerate = 0,                    /* auto */
+  .camera_resolution = {0, 0},              /* auto */
+
   .data = NULL,
 };
 
@@ -392,6 +396,14 @@ void     pp_parse_slides  (PinPointRenderer *renderer,
  */
 
 static void
+parse_resolution (PPResolution *r,
+                  const gchar  *str)
+{
+  if (sscanf (str, "%dx%d", &r->width, &r->height) != 2)
+    r->width = r->height = 0;
+}
+
+static void
 parse_setting (PinPointPoint *point,
                const char    *setting)
 {
@@ -405,7 +417,9 @@ parse_setting (PinPointPoint *point,
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
 #define STRING  g_intern_string (strchr (setting, '=') + 1)
+#define INT     atoi (strchr (setting, '=') + 1)
 #define FLOAT   g_ascii_strtod (strchr (setting, '=') + 1, NULL)
+#define RESOLUTION(r) parse_resolution (&r, strchr (setting, '=') + 1)
 #define ENUM(r,t,s) \
   do { \
       int _i; \
@@ -426,6 +440,8 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("duration=")   point->duration = FLOAT;
   IF_PREFIX("command=")    point->command = STRING;
   IF_PREFIX("transition=") point->transition = STRING;
+  IF_PREFIX("camera-framerate=")  point->camera_framerate = INT;
+  IF_PREFIX("camera-resolution=") RESOLUTION (point->camera_resolution);
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
   IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
   IF_EQUAL("stretch")      point->bg_scale = PP_BG_STRETCH;
@@ -452,7 +468,9 @@ parse_setting (PinPointPoint *point,
 #undef IF_EQUAL
 #undef FLOAT
 #undef STRING
+#undef INT
 #undef ENUM
+#undef RESOLUTION
 }
 
 static void
@@ -775,7 +793,10 @@ pp_parse_slides (PinPointRenderer *renderer,
                             filename[i] = tolower(filename[i]);
                             i++;
                           }
-                        if (str_has_video_suffix (filename))
+
+                        if (strcmp (filename, "camera") == 0)
+                          point->bg_type = PP_BG_CAMERA;
+                        else if (str_has_video_suffix (filename))
                           point->bg_type = PP_BG_VIDEO;
                         else if (g_str_has_suffix (filename, ".svg"))
                           point->bg_type = PP_BG_SVG;

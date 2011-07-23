@@ -47,6 +47,7 @@ typedef enum
   PP_BG_COLOR,
   PP_BG_IMAGE,
   PP_BG_VIDEO,
+  PP_BG_CAMERA,
   PP_BG_SVG
 } PPBackgroundType;
 
@@ -57,6 +58,11 @@ typedef enum
   PP_BG_FILL,
   PP_BG_STRETCH
 } PPBackgroundScale;
+
+typedef struct
+{
+  gint width, height;
+} PPResolution;
 
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
 
@@ -102,6 +108,9 @@ struct _PinPointPoint
   const char        *transition;      /* transition template to use, if any */
 
   const char        *command;
+
+  gint              camera_framerate;
+  PPResolution      camera_resolution;
 
   void              *data;            /* the renderer can attach data here */
 };
