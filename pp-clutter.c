@@ -757,6 +757,16 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
 
 }
 
+static gboolean
+stage_deleted (ClutterStage *stage,
+               ClutterEvent *event,
+               gpointer      user_data)
+{
+  clutter_main_quit ();
+
+  return TRUE;
+}
+
 static void
 clutter_renderer_init (PinPointRenderer   *pp_renderer,
                        char               *pinpoint_file)
@@ -806,6 +816,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 
 
   clutter_stage_set_color (CLUTTER_STAGE (stage), &black);
+  g_signal_connect (stage, "delete-event",
+                    G_CALLBACK (stage_deleted), renderer);
   g_signal_connect (stage, "key-press-event",
                     G_CALLBACK (key_pressed), renderer);
   g_signal_connect (stage, "notify::width",
