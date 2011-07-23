@@ -230,7 +230,6 @@ main (int    argc,
       pp_rehearse_init ();
       printf ("Running in rehearsal mode, press ctrl+C to abort without saving timings back to %s\n", pinfile);
     }
-
   renderer->run (renderer);
   renderer->finalize (renderer);
   if (renderer->source)
@@ -557,6 +556,9 @@ static void serialize_slide_config (GString       *str,
 #define STRING(v,n) \
   if (point->v != reference->v) \
     g_string_append_printf (str, "%s[" n "%s]", separator, point->v)
+#define INT(v,n) \
+  if (point->v != reference->v) \
+    g_string_append_printf (str, "%s[" n "%d]", separator, point->v)
 #define FLOAT(v,n) \
   if (point->v != reference->v) \
     g_string_append_printf (str, "%s[" n "%f]", separator, point->v)
@@ -623,6 +625,14 @@ static void serialize_slide_config (GString       *str,
   if (point->duration != 0.0)
     FLOAT(duration, "duration="); /* XXX: probably needs special treatment */
 
+  INT(camera_framerate, "camera-framerate=");
+  if (point->camera_resolution.width != reference->camera_resolution.width &&
+      point->camera_resolution.height != reference->camera_resolution.height)
+    {
+        g_string_append_printf (str, "[camera-resolution=%dx%d]",
+                                point->camera_resolution.width,
+                                point->camera_resolution.height);
+    }
 
   if (point->use_markup != reference->use_markup)
     {
@@ -634,6 +644,7 @@ static void serialize_slide_config (GString       *str,
     }
 
 #undef FLOAT
+#undef INT
 #undef STRING
 }
 
