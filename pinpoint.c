@@ -90,6 +90,7 @@ gboolean  pp_fullscreen      = FALSE;
 gboolean  pp_maximized       = FALSE;
 gboolean  pp_speakermode     = FALSE;
 gboolean  pp_rehearse        = FALSE;
+char     *pp_camera_device   = NULL;
 
 static GOptionEntry entries[] =
 {
@@ -107,6 +108,8 @@ static GOptionEntry entries[] =
     { "output", 'o', 0, G_OPTION_ARG_STRING, &pp_output_filename,
       "Output presentation to FILE\n"
 "                                         (formats supported: pdf)", "FILE" },
+    { "camera", 'c', 0, G_OPTION_ARG_STRING, &pp_camera_device,
+      "Device to use for [camera] background", "DEVICE" },
     { NULL }
 };
 

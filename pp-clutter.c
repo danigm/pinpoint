@@ -959,6 +959,7 @@ setup_camera (PinPointRenderer *renderer,
   GstElement       *sink;
   GstCaps          *caps;
   gboolean          result;
+  GError           *error = NULL;
 
   if (texture)
     {
@@ -977,7 +978,15 @@ setup_camera (PinPointRenderer *renderer,
   /* Set up pipeline */
   pipeline = gst_pipeline_new (NULL);
 
-  src = gst_element_factory_make ("v4l2src", NULL);
+  src = gst_element_factory_make ("v4l2src", &error);
+  if (src == NULL)
+    {
+      g_critical ("Failed to create v4l2src element: %s", error->message);
+      g_clear_error (&error);
+      g_object_unref (pipeline);
+      return;
+    }
+
   capsfilter = gst_element_factory_make ("capsfilter", NULL);
   sink = clutter_gst_video_sink_new (CLUTTER_TEXTURE (texture));
 
@@ -991,6 +1000,9 @@ setup_camera (PinPointRenderer *renderer,
                            point->camera_framerate, 1,
                            NULL);
     }
+
+  if (pp_camera_device)
+    g_object_set (src, "device", pp_camera_device, NULL);
 
 #define W (point->camera_resolution.width)
 #define H (point->camera_resolution.height)
