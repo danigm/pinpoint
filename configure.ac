@@ -13,6 +13,7 @@ AC_HEADER_STDC
 PINPOINT_DEPS="clutter-1.0 >= 1.4 gio-2.0 cairo-pdf pangocairo gdk-pixbuf-2.0"
 
 AS_COMPILER_FLAGS([MAINTAINER_CFLAGS], [-Wall])
+AC_SUBST(MAINTAINER_CFLAGS)
 
 # Do we have clutter compiled for x11?
 PKG_CHECK_EXISTS([clutter-x11-1.0],
