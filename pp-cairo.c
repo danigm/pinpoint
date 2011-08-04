@@ -92,11 +92,6 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
                                           g_object_unref);
 }
 
-static void
-cairo_renderer_cr_render(void    *pp_renderer,
-                         cairo_t *cr);
-
-
 /* This function is adapted from Gtk's gdk_cairo_set_source_pixbuf() you can
  * find in gdk/gdkcairo.c.
  * Copyright (C) Red Had, Inc.
@@ -243,7 +238,7 @@ _cairo_get_surface (CairoRenderer *renderer,
   if (g_str_has_suffix (file, ".jpg") || g_str_has_suffix (file, ".jpeg"))
       {
         unsigned char *data = NULL;
-        guint len;
+        guint len = 0;
 
         _cairo_read_file (file, &data, &len);
         cairo_surface_set_mime_data (surface, CAIRO_MIME_TYPE_JPEG,

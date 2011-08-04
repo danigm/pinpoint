@@ -60,9 +60,9 @@ convert_buffer_to_pixbuf (GstBuffer    *buffer,
     GstElement *src, *sink, *colorspace, *scale, *filter;
     GstBus *bus;
     GstMessage *msg;
-    GstStateChangeReturn state;
+    GstStateChangeReturn state G_GNUC_UNUSED;
     gboolean ret;
-    int width, height, dw, dh, i;
+    int dw, dh, i;
     GstStructure *s;
 
     s = gst_caps_get_structure (GST_BUFFER_CAPS (buffer), 0);

@@ -76,7 +76,6 @@ static ClutterColor c_prog_slide = {0xff,0xff,0xff,0x77};
 static ClutterColor c_prog_time =  {0xff,0xff,0xff,0x55};
 
 static ClutterColor black = {0x00,0x00,0x00,0xff};
-static ClutterColor gray  = {0x77,0x77,0x77,0xff};
 static ClutterColor white = {0xff,0xff,0xff,0xff};
 static ClutterColor red   = {0xff,0x00,0x00,0xff};
 
@@ -313,13 +312,11 @@ static void
 activate_commandline (ClutterRenderer *renderer)
 {
   PinPointPoint *point;
-  ClutterPointData *data;
 
   if (!pp_slidep)
     return;
 
   point = pp_slidep->data;
-  data = point->data;
 
   clutter_actor_animate (renderer->commandline,
                          CLUTTER_LINEAR, 500,
@@ -331,8 +328,11 @@ activate_commandline (ClutterRenderer *renderer)
                          "opacity",     (int)(point->shading_opacity*0xff*0.33),
                          NULL);
 
-  g_object_set (renderer->commandline, "editable", TRUE,
-                "single-line-mode", TRUE, "activatable", TRUE, NULL);
+  g_object_set (renderer->commandline,
+                "editable", TRUE,
+                "single-line-mode", TRUE,
+                "activatable", TRUE,
+                NULL);
   clutter_actor_grab_key_focus (renderer->commandline);
 }
 
@@ -585,6 +585,8 @@ start_rehearse (ClutterActor *actor,
   start (actor, event, data);
   pp_rehearse = TRUE;
   pp_rehearse_init ();
+
+  return FALSE;
 }
 
 
@@ -982,7 +984,7 @@ setup_camera (PinPointRenderer *renderer,
     {
       g_critical ("Failed to create v4l2src element");
       g_object_unref (pipeline);
-      return;
+      return FALSE;
     }
 
   capsfilter = gst_element_factory_make ("capsfilter", NULL);
@@ -1041,7 +1043,7 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
   const char       *file      = point->bg;
         char       *full_path = NULL;
   ClutterColor color;
-  gboolean ret;
+  gboolean ret = FALSE;
 
   if (point->bg_type != PP_BG_COLOR && renderer->path && file)
     {
@@ -1509,8 +1511,6 @@ static gfloat slide_time (ClutterRenderer *renderer,
 static gboolean update_speaker_screen (ClutterRenderer *renderer)
 {
   PinPointPoint *point;
-  int n_slides;
-  int slide_no;
 
   if (!pp_slidep)
     return FALSE;
@@ -1604,16 +1604,11 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
     for (iter = pp_slides, i=0; iter && iter != pp_slidep;
          iter = iter->next, i++);
 
-    slide_no = i + 1;
-    n_slides = g_list_length (pp_slides);
-
     {
       int time;
-      gboolean over_time = FALSE;
       time = renderer->total_seconds -
                       g_timer_elapsed (renderer->timer, NULL) + 0.5;
-      if (time < 0)
-        over_time = TRUE;
+
       if (time <= -60)
         g_string_printf (str, "%imin", time/60);
       else if (time <= 10)
@@ -1697,7 +1692,6 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
 
   {
     static GList *current_slide = NULL;
-    float nh, nw;
     if (current_slide != pp_slidep)
       {
         cairo_t *cr;

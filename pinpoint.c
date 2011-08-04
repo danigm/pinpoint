@@ -31,6 +31,10 @@
 
 #include "pinpoint.h"
 
+#ifdef USE_CLUTTER_GST
+#include <clutter-gst/clutter-gst.h>
+#endif
+
 GList *pp_slides      = NULL; /* list of slide text */
 GList *pp_slidep      = NULL; /* current slide */
 
@@ -597,6 +601,8 @@ static void serialize_slide_config (GString       *str,
       g_string_append (str, separator);
       switch (point->position)
         {
+          case CLUTTER_GRAVITY_NONE:
+            break;
           case CLUTTER_GRAVITY_CENTER:
             g_string_append (str, "[center]");break;
           case CLUTTER_GRAVITY_NORTH:

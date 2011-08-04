@@ -28,7 +28,6 @@
 #include "config.h"
 #endif
 
-
 #include <clutter/clutter.h>
 
 typedef struct _PinPointPoint    PinPointPoint;
