@@ -1511,6 +1511,10 @@ static gboolean update_speaker_screen (ClutterRenderer *renderer)
   PinPointPoint *point;
   int n_slides;
   int slide_no;
+
+  if (!pp_slidep)
+    return FALSE;
+
   point = pp_slidep->data;
   static float current_slide_time = 0.0;
   static float current_slide_duration = 0.0;
