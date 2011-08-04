@@ -17,6 +17,7 @@
  */
 
 #include <config.h>
+
 #ifdef USE_CLUTTER_GST
 
 #include <string.h>
@@ -259,63 +260,4 @@ gst_video_thumbnailer_get_shot (const gchar  *location,
 
     return shot;
 }
-
-static gboolean
-is_interesting (GdkPixbuf *pixbuf)
-{
-    int width, height, r, rowstride;
-    gboolean has_alpha;
-    guint32 histogram[4][4][4] = {{{0,},},};
-    guchar *pixels;
-    int pxl_count = 0, count, i;
-
-    width = gdk_pixbuf_get_width (pixbuf);
-    height = gdk_pixbuf_get_height (pixbuf);
-    rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-    has_alpha = gdk_pixbuf_get_has_alpha (pixbuf);
-
-    pixels = gdk_pixbuf_get_pixels (pixbuf);
-    for (r = 0; r < height; r++) {
-        guchar *row = pixels + (r * rowstride);
-        int c;
-
-        for (c = 0; c < width; c++) {
-            guchar r, g, b;
-
-            r = row[0];
-            g = row[1];
-            b = row[2];
-
-            histogram[r / 64][g / 64][b / 64]++;
-
-            if (has_alpha) {
-                row += 4;
-            } else {
-                row += 3;
-            }
-
-            pxl_count++;
-        }
-    }
-
-    count = 0;
-    for (i = 0; i < 4; i++) {
-        int j;
-        for (j = 0; j < 4; j++) {
-            int k;
-
-            for (k = 0; k < 4; k++) {
-                /* Count how many bins have more than
-                   1% of the pixels in the histogram */
-                if (histogram[i][j][k] > pxl_count / 100) {
-                    count++;
-                }
-            }
-        }
-    }
-
-    /* Image is boring if there is only 1 bin with > 1% of pixels */
-    return count > 1;
-}
-
-#endif
+#endif /* USE_CLUTTER_GST */
