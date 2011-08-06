@@ -1075,8 +1075,9 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
 #ifdef USE_CLUTTER_GST
       data->background = clutter_gst_video_texture_new ();
       clutter_media_set_filename (CLUTTER_MEDIA (data->background), file);
-      /* should pre-roll the video and set the size */
-      clutter_actor_set_size (data->background, 400, 300);
+      g_signal_connect (CLUTTER_TEXTURE (data->background),
+                        "size-change",
+                        G_CALLBACK (on_size_changed), renderer);
       ret = TRUE;
 #endif
       break;
