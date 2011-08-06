@@ -1295,30 +1295,6 @@ static void leave_slide (ClutterRenderer *renderer,
                                  CLUTTER_LINEAR, 1000,
                                  "opacity",      0x0,
                                  NULL);
-#ifdef USE_CLUTTER_GST
-          if (point->bg_type == PP_BG_CAMERA)
-            {
-              gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
-            }
-          if (CLUTTER_GST_IS_VIDEO_TEXTURE (data->background))
-            {
-              clutter_media_set_playing (CLUTTER_MEDIA (data->background),
-                                         FALSE);
-            }
-#endif
-#ifdef USE_DAX
-          if (DAX_IS_ACTOR (data->background))
-            {
-              dax_actor_set_playing (DAX_ACTOR (data->background), FALSE);
-            }
-          else if (PP_IS_SUPER_AA (data->background))
-            {
-              ClutterActor *actor;
-
-              actor = mx_offscreen_get_child (MX_OFFSCREEN (data->background));
-              dax_actor_set_playing (DAX_ACTOR (actor), FALSE);
-            }
-#endif
         }
     }
   else
@@ -1330,6 +1306,34 @@ static void leave_slide (ClutterRenderer *renderer,
           else
             clutter_state_set_state (data->state, "post");
         }
+    }
+
+  if (data->background)
+    {
+#ifdef USE_CLUTTER_GST
+      if (point->bg_type == PP_BG_CAMERA)
+        {
+          gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
+        }
+      if (CLUTTER_GST_IS_VIDEO_TEXTURE (data->background))
+        {
+          clutter_media_set_playing (CLUTTER_MEDIA (data->background),
+                                     FALSE);
+        }
+#endif
+#ifdef USE_DAX
+      if (DAX_IS_ACTOR (data->background))
+        {
+          dax_actor_set_playing (DAX_ACTOR (data->background), FALSE);
+        }
+      else if (PP_IS_SUPER_AA (data->background))
+        {
+          ClutterActor *actor;
+
+          actor = mx_offscreen_get_child (MX_OFFSCREEN (data->background));
+          dax_actor_set_playing (DAX_ACTOR (actor), FALSE);
+        }
+#endif
     }
 }
 
