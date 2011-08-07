@@ -75,7 +75,7 @@ static PinPointPoint pin_default_point = {
 
   .shading_color = "black",
   .shading_opacity = 0.66,
-  .transition = NULL,
+  .transition = "fade",
 
   .command = NULL,
 
