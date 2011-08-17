@@ -35,8 +35,11 @@
 #include <clutter-gst/clutter-gst.h>
 #endif
 
+/* Probably time to create a PinPointPresentation type */
+
 GList *pp_slides      = NULL; /* list of slide text */
 GList *pp_slidep      = NULL; /* current slide */
+GFile *pp_basedir     = NULL; /* basedir to resolve relative paths against */
 
 typedef struct
 {
@@ -227,6 +230,15 @@ main (int    argc,
 
   if (!pinfile)
     pp_rehearse = FALSE;
+
+  if (pinfile)
+    {
+      GFile *file;
+
+      file = g_file_new_for_commandline_arg (pinfile);
+      pp_basedir = g_file_get_parent (file);
+      g_object_unref (file);
+    }
 
   renderer->init (renderer, pinfile);
   pp_parse_slides (renderer, text);

@@ -123,6 +123,7 @@ extern char     *pp_camera_device;
 
 extern GList         *pp_slides;  /* list of slide text */
 extern GList         *pp_slidep;  /* current slide */
+extern GFile         *pp_basedir;
 extern PinPointPoint *point_defaults;
 
 void     pp_parse_slides  (PinPointRenderer *renderer,

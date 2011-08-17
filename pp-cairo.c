@@ -368,11 +368,18 @@ _cairo_render_background (CairoRenderer *renderer,
         cairo_surface_t *surface;
         float bg_x, bg_y, bg_width, bg_height, bg_scale_x, bg_scale_y;
         GCancellable* cancellable = g_cancellable_new ();
+        GFile *abs_file;
+        gchar *abs_path;
 
-        pixbuf = gst_video_thumbnailer_get_shot (file, cancellable);
+        abs_file = g_file_resolve_relative_path (pp_basedir, point->bg);
+        abs_path = g_file_get_path (abs_file);
+        g_object_unref (abs_file);
+
+        pixbuf = gst_video_thumbnailer_get_shot (abs_path, cancellable);
+        g_free (abs_path);
         if (pixbuf == NULL)
           {
-            g_warning ("Could not create video thumbmail for %s", file);
+            g_warning ("Could not create video thumbmail for %s", point->bg);
             break;
           }
 
