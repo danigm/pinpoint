@@ -1251,6 +1251,8 @@ key_pressed (ClutterActor    *actor,
           renderer->autoadvance = TRUE;
         break;
       case CLUTTER_F11:
+        case CLUTTER_F:
+        case CLUTTER_f:
         {
           gboolean was_fullscreen = pp_get_fullscreen (
                                               CLUTTER_STAGE (renderer->stage));
