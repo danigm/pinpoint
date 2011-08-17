@@ -371,7 +371,10 @@ _cairo_render_background (CairoRenderer *renderer,
 
         pixbuf = gst_video_thumbnailer_get_shot (file, cancellable);
         if (pixbuf == NULL)
-          break;
+          {
+            g_warning ("Could not create video thumbmail for %s", file);
+            break;
+          }
 
         surface = _cairo_new_surface_from_pixbuf (pixbuf);
         g_hash_table_insert (renderer->surfaces, g_strdup (file), surface);
