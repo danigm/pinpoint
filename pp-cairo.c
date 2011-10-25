@@ -68,8 +68,10 @@ _destroy_surface (gpointer data)
   cairo_surface_destroy (surface);
 }
 
-#define A4_LS_WIDTH  841.88976378
-#define A4_LS_HEIGHT 595.275590551
+#define A4_LS_WIDTH   841.88976378
+#define A4_LS_HEIGHT  595.275590551
+
+#define A4_MARGIN     A4_LS_WIDTH * .05
 
 static void
 cairo_renderer_init (PinPointRenderer *pp_renderer,
@@ -522,13 +524,55 @@ cairo_renderer_render_page (CairoRenderer *renderer,
 }
 
 static void
+_cairo_render_notes (CairoRenderer *renderer,
+                     PinPointPoint *point)
+{
+  PangoLayout          *layout;
+  PangoFontDescription *desc;
+
+  if (point == NULL)
+    return;
+
+  layout = pango_cairo_create_layout (renderer->ctx);
+  pango_layout_set_text (layout, point->speaker_notes, -1);
+
+  desc = pango_font_description_from_string ("Sans");
+  pango_layout_set_font_description (layout, desc);
+
+  pango_layout_set_alignment (layout, PANGO_ALIGN_LEFT);
+
+  cairo_save (renderer->ctx);
+  cairo_translate (renderer->ctx, A4_MARGIN, A4_MARGIN);
+  cairo_set_source_rgba (renderer->ctx, 0., 0., 0., 1);
+  pango_cairo_show_layout (renderer->ctx, layout);
+  cairo_restore (renderer->ctx);
+
+  pango_font_description_free (desc);
+  g_object_unref (layout);
+}
+
+static void
+cairo_render_speaker_notes (CairoRenderer *renderer,
+                            PinPointPoint *point)
+{
+  _cairo_render_notes (renderer, point);
+  cairo_show_page (renderer->ctx);
+}
+
+static void
 cairo_renderer_run (PinPointRenderer *pp_renderer)
 {
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
   GList         *cur;
 
   for (cur = pp_slides; cur; cur = g_list_next (cur))
-    cairo_renderer_render_page (renderer, cur->data);
+    {
+      PinPointPoint *point = cur->data;
+
+      cairo_renderer_render_page (renderer, point);
+      if (point->speaker_notes)
+        cairo_render_speaker_notes (renderer, point);
+    }
 }
 
 static void
