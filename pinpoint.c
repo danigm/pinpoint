@@ -61,7 +61,7 @@ static EnumDescription PPTextAlign_desc[] =
 static PinPointPoint pin_default_point = {
   .stage_color = "black",
 
-  .bg = "NULL",
+  .bg = NULL,
   .bg_type = PP_BG_NONE,
   .bg_scale = PP_BG_FIT,
 

@@ -1067,6 +1067,25 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
                                            NULL);
       }
       break;
+    case PP_BG_NONE:
+      {
+        ClutterColor black = {0, 0, 0, 255};
+
+        ret = clutter_color_from_string (&color, point->stage_color);
+        if (ret)
+          data->background = g_object_new (CLUTTER_TYPE_RECTANGLE,
+                                           "color",  &color,
+                                           "width",  100.0,
+                                           "height", 100.0,
+                                           NULL);
+        else
+          data->background = g_object_new (CLUTTER_TYPE_RECTANGLE,
+                                           "color",  &black,
+                                           "width",  100.0,
+                                           "height", 100.0,
+                                           NULL);
+      }
+      break;
     case PP_BG_IMAGE:
       data->background = _clutter_get_texture (renderer, file);
       ret = TRUE;

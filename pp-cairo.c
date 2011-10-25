@@ -288,7 +288,7 @@ _cairo_render_background (CairoRenderer *renderer,
   char       *full_path = NULL;
   const char *file;
 
-  if (point == NULL)
+  if (point == NULL || point->bg == NULL)
     {
       cairo_set_source_rgb (renderer->ctx, 0,0,0);
       cairo_paint (renderer->ctx);
