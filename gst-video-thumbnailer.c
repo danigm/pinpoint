@@ -194,7 +194,6 @@ gst_video_thumbnailer_get_shot (const gchar  *location,
     while (state == GST_STATE_CHANGE_ASYNC
            && count < 5
            && !g_cancellable_is_cancelled (cancellable)) {
-        g_print ("Waiting in loop %d\n", count);
         state = gst_element_get_state (playbin, NULL, 0, 1 * GST_SECOND);
         count++;
 
@@ -237,7 +236,6 @@ gst_video_thumbnailer_get_shot (const gchar  *location,
             state = gst_element_get_state (playbin, NULL, 0,
                                            0.2 * GST_SECOND);
             while (state == GST_STATE_CHANGE_ASYNC && count < 3) {
-                g_print ("Waiting in loop %d\n", count);
                 state = gst_element_get_state (playbin, NULL, 0, 1 * GST_SECOND);
                 count++;
             }
