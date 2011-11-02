@@ -139,6 +139,15 @@ typedef struct _ClutterRenderer
                              */
 
   PinPointRenderer *cairo_renderer;
+
+  /* Proxy object for the Gnome Session Manager; used to inhibit suspend during
+   * presentations.
+   */
+  GDBusProxy       *gsm;
+  /* Token returned by the Inhibit() method; passed to Uninhibit() when we
+   * leave fullscreen to tell GSM it's free to turn the screen off now.
+   */
+  guint32           inhibit_cookie;
 } ClutterRenderer;
 
 typedef struct
@@ -776,6 +785,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
   GFileMonitor *monitor;
   ClutterActor *stage;
+  GDBusConnection *session_bus;
 
   renderer->stage = stage = clutter_stage_new ();
   renderer->root = clutter_group_new ();
@@ -863,6 +873,22 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 
   renderer->cairo_renderer = pp_cairo_renderer ();
   renderer->cairo_renderer->init (renderer->cairo_renderer, "");
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (session_bus != NULL)
+    {
+      renderer->gsm = g_dbus_proxy_new_sync (session_bus,
+                                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                             G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS |
+                                             G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
+                                             NULL,
+                                             "org.gnome.SessionManager",
+                                             "/org/gnome/SessionManager",
+                                             "org.gnome.SessionManager",
+                                             NULL,
+                                             NULL);
+      g_clear_object (&session_bus);
+    }
 }
 
 static gboolean update_speaker_screen (ClutterRenderer *renderer);
@@ -888,6 +914,7 @@ clutter_renderer_finalize (PinPointRenderer *pp_renderer)
 
   clutter_actor_destroy (renderer->stage);
   g_hash_table_unref (renderer->bg_cache);
+  g_clear_object (&renderer->gsm);
 }
 
 static ClutterActor *
@@ -1230,6 +1257,62 @@ toggle_speaker_screen (ClutterRenderer *renderer)
     }
 }
 
+static void
+pp_inhibit (ClutterRenderer *renderer,
+            gboolean         fullscreen)
+{
+#if HAVE_CLUTTER_X11
+  /* Hey maybe we don't have D-Bus. */
+  if (renderer->gsm == NULL)
+    return;
+
+  if (fullscreen)
+    {
+      GVariant *args = g_variant_new ("(susu)",
+                                      "Pinpoint",
+                                      clutter_x11_get_stage_window (
+                                          CLUTTER_STAGE (renderer->stage)),
+                                      "Presenting some blingin' slides",
+                                      /* The flag '8' means "Inhibit the
+                                       * session being marked as idle", as
+                                       * opposed to logging out, user
+                                       * switching, or suspending.
+                                       */
+                                      8);
+      GVariant *ret = g_dbus_proxy_call_sync (renderer->gsm,
+                                              "Inhibit",
+                                              args,
+                                              G_DBUS_CALL_FLAGS_NONE,
+                                              -1,
+                                              NULL,
+                                              NULL);
+
+      if (ret != NULL)
+        {
+          if (g_variant_is_of_type (ret, G_VARIANT_TYPE ("(u)")))
+            g_variant_get (ret, "(u)", &renderer->inhibit_cookie);
+
+          g_variant_unref (ret);
+        }
+      /* Bleh, maybe this is an older version of Gnome where it was the
+       * screensaver which had the inhibition API.
+       */
+    }
+  else if (renderer->inhibit_cookie != 0)
+    {
+      g_dbus_proxy_call_sync (renderer->gsm,
+                              "Uninhibit",
+                              g_variant_new ("(u)", renderer->inhibit_cookie),
+                              G_DBUS_CALL_FLAGS_NONE,
+                              -1,
+                              NULL,
+                              NULL);
+      renderer->inhibit_cookie = 0;
+    }
+  /* else I guess Inhibit() failed. */
+#endif /* HAVE_CLUTTER_X11 */
+}
+
 static gboolean
 key_pressed (ClutterActor    *actor,
              ClutterEvent    *event,
@@ -1279,6 +1362,8 @@ key_pressed (ClutterActor    *actor,
           if (renderer->speaker_mode && renderer->speaker_screen)
             pp_set_fullscreen (CLUTTER_STAGE (renderer->speaker_screen),
                                !was_fullscreen);
+
+          pp_inhibit (renderer, !was_fullscreen);
         }
         break;
       case CLUTTER_Return:
