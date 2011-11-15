@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT(pinpoint, [0.1.3], [])
+AC_INIT(pinpoint, [0.1.4], [])
 AC_CONFIG_SRCDIR(pinpoint.c)
 AC_CONFIG_AUX_DIR([build])
 AM_INIT_AUTOMAKE([foreign -Wno-portability no-define])
