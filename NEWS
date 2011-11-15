@@ -1,3 +1,12 @@
+0.1.4 - Schnitzel - 2011-11-15
+
+- start of a speaker screen, support for speaker notes
+  (this part is lacking in documentation and interaction)
+- A camera/v4l based slide background
+- Fully stop videos when transitioning between them
+- Made "fade" be the default transition
+- Inhibit screensaver when running fullscreen
+
 0.1.2 - Sushi Monday - 2011-05-23
 
 - New background scaling type 'stretch'
@@ -6,7 +15,7 @@
 - Only treat # at start of line as comments
 - Improve documentation
 - Distribute ClutterScript based transitions in tarball
-  (without it pinpoint didnt work)(
+  (without it pinpoint didnt work)
 
 0.1.0 - First release - 2011-05-17
 
