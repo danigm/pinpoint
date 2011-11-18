@@ -872,7 +872,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                                               NULL, _destroy_surface);
 
   renderer->cairo_renderer = pp_cairo_renderer ();
-  renderer->cairo_renderer->init (renderer->cairo_renderer, "");
+  renderer->cairo_renderer->init (renderer->cairo_renderer, pinpoint_file);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
   if (session_bus != NULL)
