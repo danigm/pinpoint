@@ -9,7 +9,11 @@ Pinpoint’s main web presence is a page on the GNOME wiki:
 
  http://live.gnome.org/Pinpoint
 
-This is the first release of pinpoint, with the following features:
+A mailinglist for pinpoint development and use is set up, it's info page is at:
+
+ http://mail.gnome.org/mailman/listinfo/pinpoint-list
+
+Some of pinpoints core features are:
 
  • Text position
  • Styling of font, text-color, contrast background and text positioning for
