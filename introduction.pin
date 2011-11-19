@@ -129,6 +129,9 @@ right, down or space - next slide
 -- [transition=slide-left] [duration=4.702688]
 left or up - previous slide
 
+-- [transition=sheet] [duration=3.435221]
+B - blanking of screen
+
 -- [transition=slide-up] [duration=3.435221]
 F11 - toggle fullscreen!
 

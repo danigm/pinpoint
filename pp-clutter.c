@@ -96,6 +96,7 @@ typedef struct _ClutterRenderer
   ClutterActor    *foreground;
 
   ClutterActor    *json_layer;
+  ClutterActor    *curtain;
 
   ClutterActor    *commandline;
   ClutterActor    *commandline_shading;
@@ -789,6 +790,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 
   renderer->stage = stage = clutter_stage_new ();
   renderer->root = clutter_group_new ();
+  renderer->curtain = clutter_rectangle_new_with_color (&black);
   renderer->rest_y = STARTPOS;
   renderer->background = clutter_group_new ();
   renderer->midground = clutter_group_new ();
@@ -798,15 +800,17 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   renderer->commandline_shading = clutter_rectangle_new_with_color (&black);
   renderer->commandline = clutter_text_new ();
 
+  clutter_actor_set_size (renderer->curtain, 10000, 10000);
+  clutter_actor_hide (renderer->curtain);
   clutter_actor_set_opacity (renderer->shading, 0x77);
   clutter_actor_set_opacity (renderer->commandline_shading, 0x77);
 
   clutter_container_add_actor (CLUTTER_CONTAINER (renderer->midground),
                                renderer->shading);
 
-
   clutter_container_add (CLUTTER_CONTAINER (renderer->stage),
                          renderer->root,
+                         renderer->curtain,
                          NULL);
   clutter_container_add (CLUTTER_CONTAINER (renderer->root),
                          renderer->background,
@@ -1371,6 +1375,13 @@ key_pressed (ClutterActor    *actor,
         break;
       case CLUTTER_Tab:
         activate_commandline (renderer);
+        break;
+      case CLUTTER_b:
+      case CLUTTER_B:
+        if (CLUTTER_ACTOR_IS_VISIBLE (renderer->curtain))
+          clutter_actor_hide (renderer->curtain);
+        else
+          clutter_actor_show (renderer->curtain);
         break;
     }
   return TRUE;
