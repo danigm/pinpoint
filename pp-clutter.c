@@ -39,7 +39,7 @@
 #include "pp-super-aa.h"
 #endif
 #include <stdlib.h>
-
+#include <string.h>
 
 void cairo_renderer_unset_cr (PinPointRenderer *pp_renderer);
 
@@ -82,6 +82,12 @@ static ClutterColor red   = {0xff,0x00,0x00,0xff};
 #ifdef HAVE_PDF
 PinPointRenderer *pp_cairo_renderer   (void);
 #endif
+
+typedef enum _PPClutterBackend
+{
+  PP_CLUTTER_BACKEND_X11,
+  PP_CLUTTER_BACKEND_UNKNOWN
+} PPClutterBackend;
 
 typedef struct _ClutterRenderer
 {
@@ -149,6 +155,8 @@ typedef struct _ClutterRenderer
    * leave fullscreen to tell GSM it's free to turn the screen off now.
    */
   guint32           inhibit_cookie;
+
+  PPClutterBackend  clutter_backend;
 } ClutterRenderer;
 
 typedef struct
@@ -223,8 +231,8 @@ pp_clutter_render_adjust_background (ClutterRenderer *renderer,
 }
 
 #ifdef HAVE_CLUTTER_X11
-static void pp_set_fullscreen (ClutterStage  *stage,
-                               gboolean       fullscreen)
+static void pp_set_fullscreen_x11 (ClutterStage     *stage,
+                                   gboolean          fullscreen)
 {
   static gboolean is_fullscreen = FALSE;
   static float old_width=640, old_height=480;
@@ -278,27 +286,48 @@ static void pp_set_fullscreen (ClutterStage  *stage,
     }
 }
 
-static gboolean pp_get_fullscreen (ClutterStage *stage)
+static gboolean pp_get_fullscreen_x11 (ClutterStage *stage)
 {
   if (!pp_maximized)
     return clutter_stage_get_fullscreen (stage);
   return pp_fullscreen;
 }
-#else
+#endif
 
 static void
-pp_set_fullscreen (ClutterStage  *stage,
-                   gboolean       fullscreen)
+pp_set_fullscreen (ClutterRenderer  *renderer,
+                   ClutterStage     *stage,
+                   gboolean          fullscreen)
 {
-  return clutter_stage_set_fullscreen (stage, fullscreen);
+  switch (renderer->clutter_backend)
+    {
+#ifdef HAVE_CLUTTER_X11
+    case PP_CLUTTER_BACKEND_X11:
+      pp_set_fullscreen_x11 (stage, fullscreen);
+      break;
+#endif
+
+    default:
+      clutter_stage_set_fullscreen (stage, fullscreen);
+      break;
+    }
 }
 
 static gboolean
-pp_get_fullscreen (ClutterStage *stage)
+pp_get_fullscreen (ClutterRenderer *renderer,
+                   ClutterStage    *stage)
 {
-  return clutter_stage_get_fullscreen (stage);
-}
+  switch (renderer->clutter_backend)
+    {
+#ifdef HAVE_CLUTTER_X11
+    case PP_CLUTTER_BACKEND_X11:
+      return pp_get_fullscreen_x11 (stage);
 #endif
+
+    default:
+      return clutter_stage_get_fullscreen (stage);
+    }
+}
 
 static void
 _destroy_surface (gpointer data)
@@ -415,7 +444,7 @@ static gboolean stage_motion (ClutterActor *actor,
   clutter_stage_show_cursor (CLUTTER_STAGE (actor));
   hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
 
-  if (!pp_get_fullscreen (CLUTTER_STAGE (actor)))
+  if (!pp_get_fullscreen (renderer, CLUTTER_STAGE (actor)))
     return FALSE;
 
   clutter_actor_get_size (CLUTTER_RENDERER (renderer)->stage,
@@ -787,6 +816,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   GFileMonitor *monitor;
   ClutterActor *stage;
   GDBusConnection *session_bus;
+  ClutterBackend *backend;
 
   renderer->stage = stage = clutter_stage_new ();
   renderer->root = clutter_group_new ();
@@ -799,6 +829,15 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   renderer->shading = clutter_rectangle_new_with_color (&black);
   renderer->commandline_shading = clutter_rectangle_new_with_color (&black);
   renderer->commandline = clutter_text_new ();
+
+  /* Clutter doesn't seem to have a good way to infer which backend it
+     is using so we'll try to guess from the name of the backend
+     class */
+  backend = clutter_get_default_backend ();
+  if (strcmp (G_OBJECT_TYPE_NAME (backend), "ClutterBackendX11") == 0)
+    renderer->clutter_backend = PP_CLUTTER_BACKEND_X11;
+  else
+    renderer->clutter_backend = PP_CLUTTER_BACKEND_UNKNOWN;
 
   clutter_actor_set_size (renderer->curtain, 10000, 10000);
   clutter_actor_hide (renderer->curtain);
@@ -861,7 +900,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
   if (pp_fullscreen)
-    pp_set_fullscreen (CLUTTER_STAGE (stage), TRUE);
+    pp_set_fullscreen (renderer, CLUTTER_STAGE (stage), TRUE);
 
   renderer->path = pinpoint_file;
   if (renderer->path)
@@ -1266,6 +1305,9 @@ pp_inhibit (ClutterRenderer *renderer,
             gboolean         fullscreen)
 {
 #if HAVE_CLUTTER_X11
+  if (renderer->clutter_backend != PP_CLUTTER_BACKEND_X11)
+    return;
+
   /* Hey maybe we don't have D-Bus. */
   if (renderer->gsm == NULL)
     return;
@@ -1342,11 +1384,13 @@ key_pressed (ClutterActor    *actor,
         break;
       case CLUTTER_F1:
         {
-          gboolean was_fullscreen = pp_get_fullscreen (
-                                              CLUTTER_STAGE (renderer->stage));
+          gboolean was_fullscreen =
+            pp_get_fullscreen (renderer,
+                               CLUTTER_STAGE (renderer->stage));
           toggle_speaker_screen (renderer);
           if (renderer->speaker_mode && renderer->speaker_screen)
-            pp_set_fullscreen (CLUTTER_STAGE (renderer->speaker_screen),
+            pp_set_fullscreen (renderer,
+                               CLUTTER_STAGE (renderer->speaker_screen),
                                was_fullscreen);
         }
         break;
@@ -1360,11 +1404,15 @@ key_pressed (ClutterActor    *actor,
         case CLUTTER_F:
         case CLUTTER_f:
         {
-          gboolean was_fullscreen = pp_get_fullscreen (
-                                              CLUTTER_STAGE (renderer->stage));
-          pp_set_fullscreen (CLUTTER_STAGE (renderer->stage), !was_fullscreen);
+          gboolean was_fullscreen =
+            pp_get_fullscreen (renderer,
+                               CLUTTER_STAGE (renderer->stage));
+          pp_set_fullscreen (renderer,
+                             CLUTTER_STAGE (renderer->stage),
+                             !was_fullscreen);
           if (renderer->speaker_mode && renderer->speaker_screen)
-            pp_set_fullscreen (CLUTTER_STAGE (renderer->speaker_screen),
+            pp_set_fullscreen (renderer,
+                               CLUTTER_STAGE (renderer->speaker_screen),
                                !was_fullscreen);
 
           pp_inhibit (renderer, !was_fullscreen);
