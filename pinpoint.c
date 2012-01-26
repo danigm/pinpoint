@@ -556,7 +556,7 @@ str_has_video_suffix (const char *string)
 {
   char *video_extensions[] =
     {".avi", ".ogg", ".ogv", ".mpg",  ".flv", ".mpeg",
-     ".mov", ".mp4", ".wmv", ".webm", ".mkv", ".3gp", NULL};
+     ".mov", ".mp4", ".wmv", ".webm", ".mkv", ".3gp", ".gif", NULL};
   char **ext;
 
   for (ext = video_extensions; *ext; ext ++)
