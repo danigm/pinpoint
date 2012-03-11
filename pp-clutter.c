@@ -631,6 +631,17 @@ start_rehearse (ClutterActor *actor,
 
 static void toggle_speaker_screen (ClutterRenderer *renderer);
 
+static gboolean
+speaker_screen_deleted (ClutterActor *actor,
+         ClutterEvent *event,
+         gpointer      data)
+{
+  ClutterRenderer *renderer = data;
+  toggle_speaker_screen(renderer);
+  return TRUE;
+}
+
+
 static void
 clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
 {
@@ -796,6 +807,8 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
   g_signal_connect (renderer->speaker_next, "button-press-event",
                     G_CALLBACK (go_next), renderer);
 
+  g_signal_connect (renderer->speaker_screen, "delete-event",
+                    G_CALLBACK (speaker_screen_deleted), renderer);
 }
 
 static gboolean
