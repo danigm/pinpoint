@@ -200,8 +200,8 @@ static gboolean key_pressed (ClutterActor    *actor,
                              ClutterEvent    *event,
                              ClutterRenderer *renderer);
 static gboolean mouse_clicked  (ClutterActor    *actor,
-                                    ClutterEvent    *event,
-                                    ClutterRenderer *renderer);
+                                ClutterEvent    *event,
+                                ClutterRenderer *renderer);
 
 static void
 pp_clutter_render_adjust_background (ClutterRenderer *renderer,
@@ -1462,8 +1462,8 @@ key_pressed (ClutterActor    *actor,
 
 static gboolean
 mouse_clicked (ClutterActor    *actor,
-             ClutterEvent    *event,
-             ClutterRenderer *renderer)
+               ClutterEvent    *event,
+               ClutterRenderer *renderer)
 {
   if(event)
   switch (clutter_event_get_button(event))
