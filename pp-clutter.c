@@ -652,6 +652,7 @@ static void
 clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
 {
   renderer->speaker_screen = clutter_stage_new ();
+  clutter_stage_set_title(CLUTTER_STAGE(renderer->speaker_screen), "Pinpoint speaker screen");
 
   renderer->speaker_notes = g_object_new (CLUTTER_TYPE_TEXT,
                                 "x", 10.0,
@@ -840,6 +841,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   ClutterBackend *backend;
 
   renderer->stage = stage = clutter_stage_new ();
+  clutter_stage_set_title(CLUTTER_STAGE(stage), "Pinpoint presentation");
   renderer->root = clutter_group_new ();
   renderer->curtain = clutter_rectangle_new_with_color (&black);
   renderer->rest_y = STARTPOS;
