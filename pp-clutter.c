@@ -512,6 +512,9 @@ play_pause (ClutterActor *actor,
             gpointer      data)
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (data);
+  if (!renderer->speaker_screen) {
+    return TRUE;
+  }
   if (renderer->timer_paused)
     {
       g_timer_continue (renderer->timer);
