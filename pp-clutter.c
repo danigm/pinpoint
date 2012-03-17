@@ -199,6 +199,9 @@ static void     stage_resized (ClutterActor     *actor,
 static gboolean key_pressed (ClutterActor    *actor,
                              ClutterEvent    *event,
                              ClutterRenderer *renderer);
+static gboolean mouse_clicked  (ClutterActor    *actor,
+                                    ClutterEvent    *event,
+                                    ClutterRenderer *renderer);
 
 static void
 pp_clutter_render_adjust_background (ClutterRenderer *renderer,
@@ -755,6 +758,8 @@ clutter_renderer_init_speaker_screen (ClutterRenderer *renderer)
 
   g_signal_connect (renderer->speaker_screen, "key-press-event",
                     G_CALLBACK (key_pressed), renderer);
+  g_signal_connect (renderer->speaker_screen, "button-press-event",
+                    G_CALLBACK (mouse_clicked), renderer);
 
 
 
@@ -888,6 +893,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                     G_CALLBACK (stage_deleted), renderer);
   g_signal_connect (stage, "key-press-event",
                     G_CALLBACK (key_pressed), renderer);
+  g_signal_connect (stage, "button-press-event",
+                    G_CALLBACK (mouse_clicked), renderer);
   g_signal_connect (stage, "notify::width",
                     G_CALLBACK (stage_resized), renderer);
 
@@ -1444,9 +1451,33 @@ key_pressed (ClutterActor    *actor,
         else
           clutter_actor_show (renderer->curtain);
         break;
+      case CLUTTER_H:
+      case CLUTTER_h:
+      case CLUTTER_Home:
+        start (NULL, NULL, renderer);
+        break;
     }
   return TRUE;
 }
+
+static gboolean
+mouse_clicked (ClutterActor    *actor,
+             ClutterEvent    *event,
+             ClutterRenderer *renderer)
+{
+  if(event)
+  switch (clutter_event_get_button(event))
+  {
+    case 1: /* Left mouse button is clicked */
+      next_slide (renderer);
+      break;
+    case 3: /* Right mouse button is clicked */
+      prev_slide (renderer);
+      break;
+  }
+  return TRUE;
+}
+
 
 static void leave_slide (ClutterRenderer *renderer,
                          gboolean         backwards)
